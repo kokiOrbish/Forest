@@ -373,6 +373,9 @@
 
     /* Activity Calendar */
     .cal-month-label { font-size: .8rem; color: var(--sub); font-weight: 750; margin-bottom: 10px; }
+    .cal-months { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .cal-month.current { padding: 0 8px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+    @media (max-width: 600px) { .cal-months { grid-template-columns: 1fr; gap: 16px; } .cal-month.current { padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); border-left: 0; border-right: 0; } }
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -1044,8 +1047,8 @@
 
       <!-- 活動カレンダー -->
       <div class="card">
-        <h2 class="card-title">📅 今月の活動カレンダー</h2>
-        <p style="color:var(--sub);font-size:.8rem;margin-bottom:12px;">あなた自身の練習日が緑でハイライトされます。</p>
+        <h2 class="card-title">📅 活動カレンダー</h2>
+        <p style="color:var(--sub);font-size:.8rem;margin-bottom:12px;">前月・今月・翌月のあなた自身の練習日が緑でハイライトされます。</p>
         <div class="cal-month-label" id="cal-month-label"></div>
         <div id="activity-calendar"><div class="empty">データを読み込み中...</div></div>
         <div class="cal-summary">
@@ -4158,13 +4161,12 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const el = document.getElementById('activity-calendar');
     if (!el) return;
     const today = getJapanDateKey();
-    const parts = getJapanDateParts();
-    const year = Number(parts.year), month = Number(parts.month);
-    setText('cal-month-label', `${year}年${month}月`);
+    const currentMonthKey = getJapanMonthKey();
+    const monthKeys = [-1, 0, 1].map(offset => shiftMonthKey(currentMonthKey, offset));
+    setText('cal-month-label', '前月・今月・翌月');
 
-    // Build user's date → points map
     const datePoints = new Map();
-    const dailySeen = new Map(); // userKey__date → {actions, minutes}
+    const dailySeen = new Map();
     for (const raw of entries) {
       const e = normalizeEntry(raw);
       if (!isSameLocalUserEntry(e) || !e.dateKey) continue;
@@ -4181,22 +4183,27 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       datePoints.set(dk, pts);
     }
 
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const firstDow = new Date(year, month - 1, 1).getDay(); // 0=Sun
     const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
-    let html = '<div class="calendar-grid">';
-    html += DAY_LABELS.map(d => `<div class="cal-header">${d}</div>`).join('');
-    for (let i = 0; i < firstDow; i++) html += '<div class="cal-day empty"></div>';
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dk = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const isToday = dk === today;
-      const isFuture = dk > today;
-      const pts = datePoints.get(dk) || 0;
-      const hasActivity = pts > 0;
-      const cls = ['cal-day', hasActivity ? 'active' : '', isToday ? 'today' : '', isFuture ? 'future' : ''].filter(Boolean).join(' ');
-      html += `<div class="${cls}"><span class="cal-day-num">${day}</span>${hasActivity ? `<span class="cal-day-pts">${pts}pt</span>` : ''}</div>`;
-    }
-    html += '</div>';
+    const monthHtml = monthKeys.map(monthKey => {
+      const [year, month] = monthKey.split('-').map(Number);
+      const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+      const firstDow = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+      let calendar = '<div class="calendar-grid">';
+      calendar += DAY_LABELS.map(d => `<div class="cal-header">${d}</div>`).join('');
+      for (let i = 0; i < firstDow; i++) calendar += '<div class="cal-day empty"></div>';
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dk = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = dk === today;
+        const isFuture = dk > today;
+        const pts = datePoints.get(dk) || 0;
+        const hasActivity = pts > 0;
+        const cls = ['cal-day', hasActivity ? 'active' : '', isToday ? 'today' : '', isFuture ? 'future' : ''].filter(Boolean).join(' ');
+        calendar += `<div class="${cls}"><span class="cal-day-num">${day}</span>${hasActivity ? `<span class="cal-day-pts">${pts}pt</span>` : ''}</div>`;
+      }
+      calendar += '</div>';
+      return `<div class="cal-month${monthKey === currentMonthKey ? ' current' : ''}"><div class="cal-month-label">${formatMonthLabel(monthKey)}</div>${calendar}</div>`;
+    }).join('');
+    const html = `<div class="cal-months">${monthHtml}</div>`;
     el.innerHTML = html;
   }
 
@@ -4336,7 +4343,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     renderPartStatsTabbed();
     renderWeakPoints(agg);
     renderComments(entries, agg);
-    renderActivityCalendar(entries);
+    renderActivityCalendar(allEntries.length ? allEntries : entries);
     renderScoreAnalytics(allEntries.length ? allEntries : entries);
   }
   function renderPrevious(entries) {
@@ -4676,6 +4683,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
           allEntries = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(e => !e.eventId || e.eventId === EVENT_CONFIG.eventId || e.eventId === 'legacy');
           if (restoreMissingPartFromEntries(allEntries)) renderCurrent(currentEntries);
+          renderActivityCalendar(allEntries.length ? allEntries : currentEntries);
           if (partStatsTab === 'all') renderPartStatsTabbed();
           renderScoreAnalytics(allEntries);
         },
