@@ -373,9 +373,13 @@
 
     /* Activity Calendar */
     .cal-month-label { font-size: .8rem; color: var(--sub); font-weight: 750; margin-bottom: 10px; }
-    .cal-months { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
-    .cal-month.current { padding: 0 8px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
-    @media (max-width: 600px) { .cal-months { grid-template-columns: 1fr; gap: 16px; } .cal-month.current { padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); border-left: 0; border-right: 0; } }
+    .cal-navigation { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .cal-navigation .cal-month-label { flex: 1; margin: 0; text-align: center; }
+    .cal-nav-btn { width: 36px; height: 34px; border: 1px solid var(--border); border-radius: 9px; background: #fff; color: var(--main); font: inherit; font-size: 1.15rem; font-weight: 900; line-height: 1; cursor: pointer; }
+    .cal-nav-btn:hover { background: var(--pale2); border-color: var(--main2); }
+    .cal-months { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .cal-month.current { padding: 0 8px; }
+    .search-highlight { background: #FFE08A; color: inherit; border-radius: 3px; padding: 0 2px; box-shadow: 0 0 0 2px rgba(242,184,75,.22); }
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -665,7 +669,7 @@
       </div>
     </div>
     <div class="header-right">
-      <button id="header-search-btn" class="header-search-btn" type="button" aria-label="サイト内を検索" title="サイト内を検索">⌕</button>
+      <button id="header-search-btn" class="header-search-btn" type="button" aria-label="サイト内を検索" title="サイト内を検索">🔍</button>
       <button id="header-profile-btn" class="header-profile-btn" type="button">登録情報を変更</button>
     </div>
   </header>
@@ -802,7 +806,7 @@
             <strong>練習資料</strong>
             <small>楽譜・音源・練習録音などはGoogle Driveにまとめています</small>
           </div>
-          <a class="resource-btn" id="resource-drive-link" href="https://drive.google.com/drive/folders/16hDpSYBWZ7nTO8Qs1iYJJJrc7_tpi8wj?usp=sharing" target="_blank" rel="noopener noreferrer">開く</a>
+          <a class="resource-btn" id="resource-drive-link" href="https://drive.google.com/drive/folders/16hDpSYBWZ7nTO8Qs1iYJJJrc7_tpi8wj?usp=sharing" target="_blank" rel="noopener noreferrer">資料を開く</a>
         </div>
       </div>
 
@@ -877,7 +881,7 @@
         <h2 class="card-title">🏆 今月のランキング</h2>
         <div class="ranking-tabs">
           <button class="ranking-tab active" data-rtab="monthly" type="button">今月トップ3</button>
-          <button class="ranking-tab" data-rtab="today" type="button">今日のダッシュ</button>
+          <button class="ranking-tab" data-rtab="today" type="button">今日の記録</button>
         </div>
         <div id="rtab-monthly" class="ranking-section active">
           <div id="overall-ranking-list" class="ranking-list"><div class="empty">まだ記録はありません。最初の一歩を踏み出そう🌱</div></div>
@@ -1048,8 +1052,12 @@
       <!-- 活動カレンダー -->
       <div class="card">
         <h2 class="card-title">📅 活動カレンダー</h2>
-        <p style="color:var(--sub);font-size:.8rem;margin-bottom:12px;">前月・今月・翌月のあなた自身の練習日が緑でハイライトされます。</p>
-        <div class="cal-month-label" id="cal-month-label"></div>
+        <p style="color:var(--sub);font-size:.8rem;margin-bottom:12px;">左右の矢印で月を切り替えると、あなた自身の練習日が緑でハイライトされます。</p>
+        <div class="cal-navigation">
+          <button id="calendar-prev-btn" class="cal-nav-btn" type="button" aria-label="前の月" title="前の月">←</button>
+          <div class="cal-month-label" id="cal-month-label"></div>
+          <button id="calendar-next-btn" class="cal-nav-btn" type="button" aria-label="次の月" title="次の月">→</button>
+        </div>
         <div id="activity-calendar"><div class="empty">データを読み込み中...</div></div>
         <div class="cal-summary">
           <div class="cal-summary-item"><div class="cal-swatch active"></div><span>練習した日</span></div>
@@ -3204,6 +3212,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   }
   function initQuiz() {
     if (!document.getElementById('page-quiz')) return;
+    document.getElementById('music-all-btn').textContent = `全${QUIZ_DATA.length}問に挑戦`;
     showStartScreen();
 
     document.getElementById('quiz-open-menu-btn')?.addEventListener('click', showQuizMenu);
@@ -3482,7 +3491,12 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   }
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-excel-quiz-count]').forEach(button => button.addEventListener('click', () => start(button.dataset.excelQuizCount)));
-    loadQuestions().then(() => { synchronizeFocusHistoryWithAll(); renderReview('focus'); renderReview('all'); renderStatus(); }).catch(() => {});
+    loadQuestions().then(() => {
+      document.querySelectorAll('[data-excel-quiz-count]').forEach(button => {
+        if (button.dataset.excelQuizCount !== 'mistakes') button.textContent = `${Math.min(Number(button.dataset.excelQuizCount), questions.length)}問`;
+      });
+      synchronizeFocusHistoryWithAll(); renderReview('focus'); renderReview('all'); renderStatus();
+    }).catch(() => {});
     byId('forest-mode-btn').addEventListener('click', showForestModes);
     document.querySelectorAll('[data-forest-scope]').forEach(button => button.addEventListener('click', () => {
       selectedScope = button.dataset.forestScope;
@@ -3551,11 +3565,75 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   }
 
   function makeSnippet(text, query) {
-    const position = text.toLocaleLowerCase('ja').indexOf(query.toLocaleLowerCase('ja'));
+    const terms = normalizedText(query).toLocaleLowerCase('ja').split(' ').filter(Boolean);
+    const position = terms.reduce((nearest, term) => {
+      const found = text.toLocaleLowerCase('ja').indexOf(term);
+      return found >= 0 && (nearest < 0 || found < nearest) ? found : nearest;
+    }, -1);
     if (position < 0) return text.slice(0, 110) + (text.length > 110 ? '…' : '');
     const start = Math.max(0, position - 36);
-    const end = Math.min(text.length, position + query.length + 74);
+    const end = Math.min(text.length, position + Math.max(...terms.map(term => term.length), 1) + 74);
     return (start > 0 ? '…' : '') + text.slice(start, end) + (end < text.length ? '…' : '');
+  }
+
+  function clearSearchHighlights() {
+    document.querySelectorAll('.search-highlight').forEach(mark => mark.replaceWith(document.createTextNode(mark.textContent)));
+  }
+
+  function highlightSearchMatches(root, query) {
+    const terms = normalizedText(query).split(' ').filter(Boolean).sort((a, b) => b.length - a.length);
+    if (!root || !terms.length) return;
+    const pattern = new RegExp(terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'giu');
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent || /^(SCRIPT|STYLE|INPUT|TEXTAREA|SELECT|MARK)$/.test(parent.tagName) || !pattern.test(node.nodeValue)) return NodeFilter.FILTER_REJECT;
+        pattern.lastIndex = 0;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      pattern.lastIndex = 0;
+      node.nodeValue.replace(pattern, (match, offset) => {
+        fragment.append(node.nodeValue.slice(lastIndex, offset));
+        const mark = document.createElement('mark');
+        mark.className = 'search-highlight';
+        mark.textContent = match;
+        fragment.append(mark);
+        lastIndex = offset + match.length;
+        return match;
+      });
+      fragment.append(node.nodeValue.slice(lastIndex));
+      node.replaceWith(fragment);
+    });
+  }
+
+  function openMatchingTabs(target, query) {
+    const terms = normalizedText(query).toLocaleLowerCase('ja').split(' ').filter(Boolean);
+    target.querySelectorAll('details').forEach(details => { details.open = true; });
+    const reviewTab = Array.from(target.querySelectorAll('[data-review-tab]')).find(button => {
+      const panelId = button.dataset.reviewTab === 'music' ? 'music-review-panel' : 'forest-review-panel';
+      const panel = document.getElementById(panelId);
+      const text = normalizedText(panel?.textContent || '').toLocaleLowerCase('ja');
+      return terms.every(term => text.includes(term));
+    });
+    if (reviewTab) reviewTab.click();
+    const scopeTab = Array.from(target.querySelectorAll('[data-forest-review-scope]')).find(button => {
+      const panel = document.getElementById(`forest-${button.dataset.forestReviewScope}-review-list`);
+      const text = normalizedText(panel?.textContent || '').toLocaleLowerCase('ja');
+      return terms.every(term => text.includes(term));
+    });
+    if (scopeTab) scopeTab.click();
+    const rankingTab = Array.from(target.querySelectorAll('[data-rtab]')).find(button => {
+      const panel = document.getElementById(`rtab-${button.dataset.rtab}`);
+      const text = normalizedText(panel?.textContent || '').toLocaleLowerCase('ja');
+      return terms.every(term => text.includes(term));
+    });
+    if (rankingTab) rankingTab.click();
   }
 
   function getMatches(query) {
@@ -3632,8 +3710,11 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
         window.setTimeout(() => {
           const target = document.getElementById(match.id);
           if (!target) return;
+          clearSearchHighlights();
+          openMatchingTabs(target, query);
           const collapsible = target.matches('details') ? target : target.closest('details');
           if (collapsible) collapsible.open = true;
+          highlightSearchMatches(target, query);
           target.scrollIntoView({ behavior: 'smooth', block: 'center' });
           target.classList.remove('site-search-target');
           void target.offsetWidth;
@@ -3755,6 +3836,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   let db = null;
   let currentEntries = [];
   let allEntries = [];
+  let activityCalendarMonthKey = getJapanMonthKey();
   let isSubmitting = false;
   let lastSubmitTime = 0;
   let commentsExpanded = false;
@@ -4140,8 +4222,8 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     if (!el) return;
     const today = getJapanDateKey();
     const currentMonthKey = getJapanMonthKey();
-    const monthKeys = [-1, 0, 1].map(offset => shiftMonthKey(currentMonthKey, offset));
-    setText('cal-month-label', '前月・今月・翌月');
+    const monthKey = activityCalendarMonthKey || currentMonthKey;
+    setText('cal-month-label', formatMonthLabel(monthKey));
 
     const datePoints = new Map();
     const dailySeen = new Map();
@@ -4162,26 +4244,23 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     }
 
     const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
-    const monthHtml = monthKeys.map(monthKey => {
-      const [year, month] = monthKey.split('-').map(Number);
-      const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
-      const firstDow = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
-      let calendar = '<div class="calendar-grid">';
-      calendar += DAY_LABELS.map(d => `<div class="cal-header">${d}</div>`).join('');
-      for (let i = 0; i < firstDow; i++) calendar += '<div class="cal-day empty"></div>';
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dk = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const isToday = dk === today;
-        const isFuture = dk > today;
-        const pts = datePoints.get(dk) || 0;
-        const hasActivity = pts > 0;
-        const cls = ['cal-day', hasActivity ? 'active' : '', isToday ? 'today' : '', isFuture ? 'future' : ''].filter(Boolean).join(' ');
-        calendar += `<div class="${cls}"><span class="cal-day-num">${day}</span>${hasActivity ? `<span class="cal-day-pts">${pts}pt</span>` : ''}</div>`;
-      }
-      calendar += '</div>';
-      return `<div class="cal-month${monthKey === currentMonthKey ? ' current' : ''}"><div class="cal-month-label">${formatMonthLabel(monthKey)}</div>${calendar}</div>`;
-    }).join('');
-    const html = `<div class="cal-months">${monthHtml}</div>`;
+    const [year, month] = monthKey.split('-').map(Number);
+    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const firstDow = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+    let calendar = '<div class="calendar-grid">';
+    calendar += DAY_LABELS.map(d => `<div class="cal-header">${d}</div>`).join('');
+    for (let i = 0; i < firstDow; i++) calendar += '<div class="cal-day empty"></div>';
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dk = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isToday = dk === today;
+      const isFuture = dk > today;
+      const pts = datePoints.get(dk) || 0;
+      const hasActivity = pts > 0;
+      const cls = ['cal-day', hasActivity ? 'active' : '', isToday ? 'today' : '', isFuture ? 'future' : ''].filter(Boolean).join(' ');
+      calendar += `<div class="${cls}"><span class="cal-day-num">${day}</span>${hasActivity ? `<span class="cal-day-pts">${pts}pt</span>` : ''}</div>`;
+    }
+    calendar += '</div>';
+    const html = `<div class="cal-months"><div class="cal-month current">${calendar}</div></div>`;
     el.innerHTML = html;
   }
 
@@ -4560,6 +4639,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     document.getElementById('private-task-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addPrivateTask(); } });
     document.getElementById('private-task-clear-done-btn')?.addEventListener('click', () => {
       const tasks = loadPrivateTasks(), next = tasks.filter(t => !t.done);
+      if (tasks.length !== next.length && !confirm('完了済みのメモを削除しますか？')) return;
       savePrivateTasks(next); renderPrivateTasks();
       if (tasks.length !== next.length) showToast('完了済みメモを削除しました');
     });
@@ -4622,6 +4702,14 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       document.getElementById('part-tab-all').classList.add('active');
       document.getElementById('part-tab-monthly').classList.remove('active');
       renderPartStatsTabbed();
+    });
+    document.getElementById('calendar-prev-btn')?.addEventListener('click', () => {
+      activityCalendarMonthKey = shiftMonthKey(activityCalendarMonthKey, -1);
+      renderActivityCalendar(allEntries.length ? allEntries : currentEntries);
+    });
+    document.getElementById('calendar-next-btn')?.addEventListener('click', () => {
+      activityCalendarMonthKey = shiftMonthKey(activityCalendarMonthKey, 1);
+      renderActivityCalendar(allEntries.length ? allEntries : currentEntries);
     });
   }
 
