@@ -1071,28 +1071,6 @@
         </div>
       </div>
 
-      <!-- 得点の推移・期間別ランキング -->
-      <div class="card" id="score-analytics-section">
-        <h2 class="card-title">📈 得点の推移とランキング</h2>
-        <p style="color:var(--sub);font-size:.8rem;margin-top:4px;">自分の獲得点の変化と、同じ期間の上位3人を確認できます。</p>
-        <div class="analytics-tabs" role="tablist" aria-label="得点の集計期間">
-          <button type="button" class="analytics-tab active" data-analytics-period="day" role="tab" aria-selected="true">日ごと</button>
-          <button type="button" class="analytics-tab" data-analytics-period="week" role="tab" aria-selected="false">週ごと</button>
-          <button type="button" class="analytics-tab" data-analytics-period="month" role="tab" aria-selected="false">月ごと</button>
-        </div>
-        <div class="analytics-layout">
-          <div class="score-chart-box">
-            <div id="score-trend-summary" class="score-chart-summary">データを読み込み中…</div>
-            <div id="score-trend-chart" class="score-chart"></div>
-          </div>
-          <div>
-            <h3 id="period-ranking-title" class="period-ranking-title">期間別ランキング</h3>
-            <div id="period-ranking-list" class="ranking-list"><div class="empty">データを読み込み中…</div></div>
-          </div>
-        </div>
-        <p id="score-analytics-note" class="analytics-note">同じ日に複数回入力した場合も、行動の加点は1日1回として集計します。</p>
-      </div>
-
       <!-- パート別 -->
       <div class="card">
         <h2 class="card-title">🎶 パート別の積み上げ</h2>
