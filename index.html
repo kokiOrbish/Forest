@@ -3783,7 +3783,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   };
   const reveal = () => {
     if (answered) return;
-    const question = quiz.questions[position];
+    const question = session[position];
     const note = question.answer_note ? `<br><small>${escapeHtml(question.answer_note)}</small>` : '';
     byId('kahi-quiz-answers').className = 'quiz-feedback visible ok';
     byId('kahi-quiz-answers').innerHTML = `<strong>答え（${question.answer_count}つ）</strong><br>${question.answers.map((answer, index) => `${index + 1}. ${escapeHtml(answer)}`).join('<br>')}${note}`;
