@@ -4215,6 +4215,8 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   const LS_AVATAR = 'mori_practice_avatar';
   const LS_PRIVATE_TASKS = 'mori_practice_private_tasks';
   const LS_RECOVERY_CODE = 'mori_practice_recovery_code';
+  const THEME_KEY = 'mori_forest_theme';
+  const ORDER_KEY = 'mori_forest_page_orders';
   const SUBMIT_COOLDOWN_MS = 3000;
 
   let db = null;
@@ -4265,6 +4267,22 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     setText('my-recovery-code', code || '未発行');
     setText('my-status-recovery-code', code || '未発行');
   }
+  function loadUserSettings() {
+    let pageOrders = {};
+    try {
+      const saved = JSON.parse(localStorage.getItem(ORDER_KEY) || '{}');
+      if (saved && typeof saved === 'object' && !Array.isArray(saved)) pageOrders = saved;
+    } catch (error) {}
+    return { theme: localStorage.getItem(THEME_KEY) || 'green', pageOrders };
+  }
+  function restoreUserSettings(settings) {
+    if (!settings || typeof settings !== 'object') return;
+    if (typeof settings.theme === 'string') localStorage.setItem(THEME_KEY, settings.theme);
+    if (settings.pageOrders && typeof settings.pageOrders === 'object' && !Array.isArray(settings.pageOrders)) {
+      localStorage.setItem(ORDER_KEY, JSON.stringify(settings.pageOrders));
+    }
+    document.dispatchEvent(new CustomEvent('mori-user-settings-restored', { detail: settings }));
+  }
   async function syncUserProfileToCloud() {
     if (!db || !hasProfile()) return;
     const userId = ensureUserId();
@@ -4276,6 +4294,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       part: localStorage.getItem(LS_PART) || '',
       avatar: localStorage.getItem(LS_AVATAR) || DEFAULT_AVATAR,
       recoveryCode,
+      settings: loadUserSettings(),
       updatedAt: serverTimestamp()
     }, { merge: true });
   }
@@ -4287,6 +4306,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     if (name) localStorage.setItem(LS_NAME, name);
     localStorage.setItem(LS_PART, data.part);
     localStorage.setItem(LS_AVATAR, avatar);
+    restoreUserSettings(data.settings);
     if (name) {
       document.getElementById('input-name').value = name;
       document.getElementById('setup-name').value = name;
@@ -4336,6 +4356,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       localStorage.setItem(LS_PART, data.part || '');
       localStorage.setItem(LS_AVATAR, data.avatar || DEFAULT_AVATAR);
       localStorage.setItem(LS_RECOVERY_CODE, data.recoveryCode || code);
+      restoreUserSettings(data.settings);
       document.getElementById('setup-name').value = data.name || '';
       document.getElementById('setup-part').value = data.part || '';
       selectAvatar(data.avatar || DEFAULT_AVATAR);
@@ -5104,6 +5125,9 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   }
 
   function startApp() {
+    document.addEventListener('mori-user-settings-changed', () => {
+      syncUserProfileToCloud().catch(err => console.warn('settings sync failed', err));
+    });
     initForm(); setSubmitEnabled(false);
     if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith('YOUR_')) {
       document.getElementById('firebase-warning').classList.add('visible'); return;
@@ -5151,8 +5175,6 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
 </script>
 <script>
 (function() {
-  const THEME_KEY = 'mori_forest_theme';
-  const ORDER_KEY = 'mori_forest_page_orders';
   const themeSelect = document.getElementById('theme-select');
   const settingsOverlay = document.getElementById('settings-overlay');
   const reorderToggle = document.getElementById('reorder-toggle-btn');
@@ -5166,13 +5188,20 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   function loadOrders() {
     try { return JSON.parse(localStorage.getItem(ORDER_KEY) || '{}'); } catch { return {}; }
   }
-  function saveOrders(orders) { localStorage.setItem(ORDER_KEY, JSON.stringify(orders)); }
+  function notifySettingsChanged() {
+    document.dispatchEvent(new CustomEvent('mori-user-settings-changed'));
+  }
+  function saveOrders(orders) {
+    localStorage.setItem(ORDER_KEY, JSON.stringify(orders));
+    notifySettingsChanged();
+  }
   function applyTheme(theme) {
     const allowed = ['green', 'red', 'cyan', 'orange', 'black', 'purple', 'brown'];
     const chosen = allowed.includes(theme) ? theme : 'green';
     document.body.dataset.theme = chosen;
     if (themeSelect) themeSelect.value = chosen;
     localStorage.setItem(THEME_KEY, chosen);
+    notifySettingsChanged();
   }
   function getGroupItems(group) {
     return group.parent ? Array.from(group.parent.querySelectorAll(group.selector)) : [];
@@ -5189,6 +5218,18 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       const down = item.querySelector(':scope > .reorder-controls .reorder-down');
       if (up) up.disabled = index === 0;
       if (down) down.disabled = index === items.length - 1;
+    });
+  }
+  function applySavedOrders(orders) {
+    orderGroups.forEach(group => {
+      if (!group.parent) return;
+      const items = getGroupItems(group);
+      const saved = Array.isArray(orders[group.key]) ? orders[group.key] : [];
+      saved.slice().reverse().forEach(layoutId => {
+        const item = items.find(candidate => candidate.dataset.layoutId === layoutId);
+        if (item) group.parent.prepend(item);
+      });
+      updateControls(group);
     });
   }
   function moveItem(group, item, direction) {
@@ -5231,13 +5272,8 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       if (!group.parent) return;
       const initialItems = getGroupItems(group);
       initialItems.forEach((item, index) => addControls(group, item, index));
-      const saved = Array.isArray(orders[group.key]) ? orders[group.key] : [];
-      saved.slice().reverse().forEach(layoutId => {
-        const item = initialItems.find(candidate => candidate.dataset.layoutId === layoutId);
-        if (item) group.parent.prepend(item);
-      });
-      updateControls(group);
     });
+    applySavedOrders(orders);
   }
   function setReorderMode(enabled) {
     document.body.classList.toggle('reorder-mode', enabled);
@@ -5251,6 +5287,11 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
 
   applyTheme(localStorage.getItem(THEME_KEY) || 'green');
   setupOrders();
+  document.addEventListener('mori-user-settings-restored', event => {
+    const settings = event.detail || {};
+    if (settings.theme) applyTheme(settings.theme);
+    if (settings.pageOrders && typeof settings.pageOrders === 'object') applySavedOrders(settings.pageOrders);
+  });
   document.getElementById('header-settings-btn')?.addEventListener('click', () => {
     settingsOverlay.classList.add('active'); settingsOverlay.setAttribute('aria-hidden', 'false');
   });
