@@ -4338,12 +4338,17 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     return true;
   }
   async function restoreProfileFromCloud() {
-    if (!db || hasProfile()) return false;
+    if (!db) return false;
     const userId = localStorage.getItem(LS_USER_ID);
     if (!userId) return false;
     const snapshot = await getDoc(doc(db, 'users', userId));
     if (!snapshot.exists()) return false;
-    return applyRecoveredProfile(snapshot.data());
+    const data = snapshot.data();
+    if (hasProfile()) {
+      restoreUserSettings(data.settings);
+      return true;
+    }
+    return applyRecoveredProfile(data);
   }
   function restoreMissingPartFromEntries(rawEntries) {
     if (hasValidPart(localStorage.getItem(LS_PART))) return false;
@@ -5157,8 +5162,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       db = getFirestore(app);
       setSubmitEnabled(true);
       restoreProfileFromCloud()
-        .catch(err => console.warn('profile restore failed', err))
-        .finally(() => syncUserProfileToCloud().catch(err => console.warn('profile sync failed', err)));
+        .catch(err => console.warn('profile restore failed', err));
       const currentMonthKey = getJapanMonthKey(), previousMonthKey = getPreviousMonthKey();
       onSnapshot(
         query(collection(db, 'entries'), where('monthKey', '==', currentMonthKey)),
