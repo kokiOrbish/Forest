@@ -31,6 +31,12 @@
       --shadow-md: 0 4px 20px rgba(47,107,63,.14);
       --nav-h: 64px;
     }
+    body[data-theme="red"] { --bg:#FFF5F3; --main:#B83A3A; --main2:#D86655; --main-dark:#7F242B; --pale:#F7D8D3; --pale2:#FCEAE7; --border:#EEDAD6; --shadow:0 2px 12px rgba(184,58,58,.10); --shadow-md:0 4px 20px rgba(184,58,58,.14); }
+    body[data-theme="cyan"] { --bg:#F0FAFC; --main:#167C91; --main2:#36A8B9; --main-dark:#0B5264; --pale:#CDEDF2; --pale2:#E5F7F9; --border:#D3E9ED; --shadow:0 2px 12px rgba(22,124,145,.10); --shadow-md:0 4px 20px rgba(22,124,145,.14); }
+    body[data-theme="orange"] { --bg:#FFF8EF; --main:#C7651D; --main2:#E58A35; --main-dark:#843B12; --pale:#F6DEC5; --pale2:#FCEEDF; --border:#EEDBC7; --shadow:0 2px 12px rgba(199,101,29,.10); --shadow-md:0 4px 20px rgba(199,101,29,.14); }
+    body[data-theme="black"] { --bg:#F4F4F4; --main:#303030; --main2:#555; --main-dark:#111; --pale:#D9D9D9; --pale2:#EBEBEB; --border:#D7D7D7; --shadow:0 2px 12px rgba(0,0,0,.10); --shadow-md:0 4px 20px rgba(0,0,0,.16); }
+    body[data-theme="purple"] { --bg:#F8F4FC; --main:#70459A; --main2:#9667BD; --main-dark:#482A69; --pale:#E4D7F0; --pale2:#F0E9F7; --border:#E3D9EC; --shadow:0 2px 12px rgba(112,69,154,.10); --shadow-md:0 4px 20px rgba(112,69,154,.14); }
+    body[data-theme="brown"] { --bg:#FAF6F1; --main:#815331; --main2:#A8784E; --main-dark:#51311E; --pale:#E9D8C7; --pale2:#F3E9DE; --border:#E5D9CC; --shadow:0 2px 12px rgba(129,83,49,.10); --shadow-md:0 4px 20px rgba(129,83,49,.14); }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
       color: var(--text);
@@ -60,6 +66,8 @@
     .header-title { font-size: 1.1rem; font-weight: 900; letter-spacing: .02em; line-height: 1.2; }
     .header-month { font-size: .78rem; opacity: .85; margin-top: 2px; }
     .header-right { display: flex; align-items: center; gap: 7px; }
+    .header-settings-btn { width:32px; height:32px; border:1.5px solid rgba(255,255,255,.32); border-radius:50%; background:rgba(255,255,255,.15); color:#fff; font:inherit; font-size:1rem; line-height:1; cursor:pointer; }
+    .header-settings-btn:hover { background:rgba(255,255,255,.25); }
     .header-search-btn {
       width: 32px;
       height: 32px;
@@ -655,6 +663,24 @@
     .site-search-result-snippet { margin-top: 3px; color: var(--sub); font-size: .8rem; line-height: 1.55; }
     .site-search-target { animation: search-target-flash 1.6s ease-out; }
     @keyframes search-target-flash { 0%, 40% { box-shadow: 0 0 0 4px rgba(242,184,75,.72), var(--shadow-md); } 100% { box-shadow: var(--shadow); } }
+    .settings-overlay { display:none; position:fixed; inset:0; z-index:450; background:rgba(16,38,23,.48); padding:18px 14px; overflow-y:auto; }
+    .settings-overlay.active { display:block; }
+    .settings-dialog { width:min(520px,100%); margin:8vh auto 0; padding:18px; border-radius:var(--radius); background:#fff; box-shadow:var(--shadow-md); }
+    .settings-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .settings-heading h2 { color:var(--main-dark); font-size:1.08rem; }
+    .settings-close { border:0; border-radius:50%; width:32px; height:32px; background:var(--pale2); color:var(--main-dark); font-size:1.25rem; line-height:1; cursor:pointer; }
+    .settings-field { margin-top:14px; }
+    .settings-field label { display:block; color:var(--text); font-weight:850; font-size:.86rem; margin-bottom:7px; }
+    .settings-help { color:var(--sub); font-size:.78rem; line-height:1.6; margin-top:6px; }
+    .reorder-mode .reorder-item { position:relative; }
+    .reorder-mode .reorder-item.reorder-dragging { opacity:.45; }
+    .reorder-controls { display:none; gap:5px; align-items:center; justify-content:flex-end; margin:-7px 0 8px; }
+    .reorder-mode .reorder-controls { display:flex; }
+    .reorder-control-btn { border:1px solid var(--border); border-radius:7px; background:var(--pale2); color:var(--main); min-width:32px; min-height:30px; font:inherit; font-weight:900; cursor:pointer; }
+    .reorder-control-btn:hover:not(:disabled) { border-color:var(--main); background:var(--pale); }
+    .reorder-control-btn:disabled { opacity:.35; cursor:default; }
+    .reorder-drag-handle { color:var(--sub); font-size:.74rem; margin-right:auto; cursor:grab; user-select:none; }
+    .reorder-drag-handle:active { cursor:grabbing; }
   </style>
 </head>
 <body>
@@ -670,9 +696,35 @@
     </div>
     <div class="header-right">
       <button id="header-search-btn" class="header-search-btn" type="button" aria-label="サイト内を検索" title="サイト内を検索">🔍</button>
+      <button id="header-settings-btn" class="header-settings-btn" type="button" aria-label="表示設定" title="表示設定">⚙️</button>
       <button id="header-profile-btn" class="header-profile-btn" type="button">登録情報を変更</button>
     </div>
   </header>
+
+  <div id="settings-overlay" class="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-hidden="true">
+    <div class="settings-dialog">
+      <div class="settings-heading">
+        <h2 id="settings-title">表示設定</h2>
+        <button id="settings-close" class="settings-close" type="button" aria-label="設定を閉じる">×</button>
+      </div>
+      <div class="settings-field">
+        <label for="theme-select">テーマカラー</label>
+        <select id="theme-select">
+          <option value="green">緑（デフォルト）</option>
+          <option value="red">赤</option>
+          <option value="cyan">水色</option>
+          <option value="orange">橙</option>
+          <option value="black">黒</option>
+          <option value="purple">紫</option>
+          <option value="brown">茶</option>
+        </select>
+      </div>
+      <div class="settings-field">
+        <button id="reorder-toggle-btn" type="button" class="secondary-btn" aria-pressed="false">項目の並べ替えを開始</button>
+        <p class="settings-help">並べ替え中は、表示中のページ内の項目を上下ボタンまたはドラッグで移動できます。ホーム・クイズ・練習の軌跡をまたいだ移動はできません。</p>
+      </div>
+    </div>
+  </div>
 
   <div id="site-search-overlay" class="site-search-overlay" role="dialog" aria-modal="true" aria-labelledby="site-search-title" aria-hidden="true">
     <div class="site-search-dialog">
@@ -5063,6 +5115,118 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   }
 
   startApp();
+</script>
+<script>
+(function() {
+  const THEME_KEY = 'mori_forest_theme';
+  const ORDER_KEY = 'mori_forest_page_orders';
+  const themeSelect = document.getElementById('theme-select');
+  const settingsOverlay = document.getElementById('settings-overlay');
+  const reorderToggle = document.getElementById('reorder-toggle-btn');
+  const orderGroups = [
+    { key: 'home', parent: document.querySelector('#page-home .container'), selector: ':scope > *' },
+    { key: 'quiz-start', parent: document.getElementById('quiz-start-screen'), selector: ':scope > .card' },
+    { key: 'quiz-menu', parent: document.querySelector('#quiz-menu-screen .quiz-start-options'), selector: ':scope > .card' },
+    { key: 'trail', parent: document.querySelector('#page-trail .container'), selector: ':scope > *' }
+  ];
+
+  function loadOrders() {
+    try { return JSON.parse(localStorage.getItem(ORDER_KEY) || '{}'); } catch { return {}; }
+  }
+  function saveOrders(orders) { localStorage.setItem(ORDER_KEY, JSON.stringify(orders)); }
+  function applyTheme(theme) {
+    const allowed = ['green', 'red', 'cyan', 'orange', 'black', 'purple', 'brown'];
+    const chosen = allowed.includes(theme) ? theme : 'green';
+    document.body.dataset.theme = chosen;
+    if (themeSelect) themeSelect.value = chosen;
+    localStorage.setItem(THEME_KEY, chosen);
+  }
+  function getGroupItems(group) {
+    return group.parent ? Array.from(group.parent.querySelectorAll(group.selector)) : [];
+  }
+  function saveGroupOrder(group) {
+    const orders = loadOrders();
+    orders[group.key] = getGroupItems(group).map(item => item.dataset.layoutId);
+    saveOrders(orders);
+  }
+  function updateControls(group) {
+    const items = getGroupItems(group);
+    items.forEach((item, index) => {
+      const up = item.querySelector(':scope > .reorder-controls .reorder-up');
+      const down = item.querySelector(':scope > .reorder-controls .reorder-down');
+      if (up) up.disabled = index === 0;
+      if (down) down.disabled = index === items.length - 1;
+    });
+  }
+  function moveItem(group, item, direction) {
+    const items = getGroupItems(group);
+    const index = items.indexOf(item), nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= items.length) return;
+    if (direction < 0) group.parent.insertBefore(item, items[nextIndex]);
+    else group.parent.insertBefore(items[nextIndex], item);
+    saveGroupOrder(group); updateControls(group);
+  }
+  function addControls(group, item, index) {
+    item.classList.add('reorder-item');
+    item.dataset.layoutId = item.dataset.layoutId || `${group.key}-${index}`;
+    item.draggable = true;
+    const controls = document.createElement('div');
+    controls.className = 'reorder-controls';
+    controls.innerHTML = '<span class="reorder-drag-handle" aria-hidden="true">↕ 並べ替え</span><button type="button" class="reorder-control-btn reorder-up" aria-label="上へ移動" title="上へ移動">↑</button><button type="button" class="reorder-control-btn reorder-down" aria-label="下へ移動" title="下へ移動">↓</button>';
+    item.insertBefore(controls, item.firstChild);
+    controls.querySelector('.reorder-up').addEventListener('click', () => moveItem(group, item, -1));
+    controls.querySelector('.reorder-down').addEventListener('click', () => moveItem(group, item, 1));
+    item.addEventListener('dragstart', event => {
+      item.classList.add('reorder-dragging');
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', item.dataset.layoutId);
+    });
+    item.addEventListener('dragend', () => item.classList.remove('reorder-dragging'));
+    item.addEventListener('dragover', event => {
+      event.preventDefault();
+      const dragged = group.parent.querySelector('.reorder-dragging');
+      if (!dragged || dragged === item) return;
+      const rect = item.getBoundingClientRect();
+      const after = event.clientY > rect.top + rect.height / 2;
+      group.parent.insertBefore(dragged, after ? item.nextSibling : item);
+    });
+    item.addEventListener('drop', event => { event.preventDefault(); saveGroupOrder(group); updateControls(group); });
+  }
+  function setupOrders() {
+    const orders = loadOrders();
+    orderGroups.forEach(group => {
+      if (!group.parent) return;
+      const initialItems = getGroupItems(group);
+      initialItems.forEach((item, index) => addControls(group, item, index));
+      const saved = Array.isArray(orders[group.key]) ? orders[group.key] : [];
+      saved.slice().reverse().forEach(layoutId => {
+        const item = initialItems.find(candidate => candidate.dataset.layoutId === layoutId);
+        if (item) group.parent.prepend(item);
+      });
+      updateControls(group);
+    });
+  }
+  function setReorderMode(enabled) {
+    document.body.classList.toggle('reorder-mode', enabled);
+    reorderToggle?.setAttribute('aria-pressed', String(enabled));
+    if (reorderToggle) reorderToggle.textContent = enabled ? '並べ替えを終了' : '項目の並べ替えを開始';
+  }
+  function closeSettings() {
+    settingsOverlay?.classList.remove('active');
+    settingsOverlay?.setAttribute('aria-hidden', 'true');
+  }
+
+  applyTheme(localStorage.getItem(THEME_KEY) || 'green');
+  setupOrders();
+  document.getElementById('header-settings-btn')?.addEventListener('click', () => {
+    settingsOverlay.classList.add('active'); settingsOverlay.setAttribute('aria-hidden', 'false');
+  });
+  document.getElementById('settings-close')?.addEventListener('click', closeSettings);
+  settingsOverlay?.addEventListener('click', event => { if (event.target === settingsOverlay) closeSettings(); });
+  themeSelect?.addEventListener('change', event => applyTheme(event.target.value));
+  reorderToggle?.addEventListener('click', () => setReorderMode(!document.body.classList.contains('reorder-mode')));
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeSettings(); });
+})();
 </script>
 </body>
 </html>
