@@ -80,6 +80,26 @@
       line-height: 1;
       cursor: pointer;
     }
+    .search-icon {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      position: relative;
+    }
+    .search-icon::after {
+      content: '';
+      position: absolute;
+      width: 7px;
+      height: 2px;
+      background: #fff;
+      border-radius: 2px;
+      right: -6px;
+      bottom: -3px;
+      transform: rotate(45deg);
+      transform-origin: left center;
+    }
     .header-search-btn:hover { background: rgba(255,255,255,.25); }
     .header-profile-btn {
       background: rgba(255,255,255,.15);
@@ -695,7 +715,7 @@
       </div>
     </div>
     <div class="header-right">
-      <button id="header-search-btn" class="header-search-btn" type="button" aria-label="サイト内を検索" title="サイト内を検索">🔍</button>
+      <button id="header-search-btn" class="header-search-btn" type="button" aria-label="サイト内を検索" title="サイト内を検索"><span class="search-icon" aria-hidden="true"></span></button>
       <button id="header-settings-btn" class="header-settings-btn" type="button" aria-label="表示設定" title="表示設定">⚙️</button>
       <button id="header-profile-btn" class="header-profile-btn" type="button">登録情報を変更</button>
     </div>
@@ -5175,6 +5195,8 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
 </script>
 <script>
 (function() {
+  const THEME_KEY = 'mori_forest_theme';
+  const ORDER_KEY = 'mori_forest_page_orders';
   const themeSelect = document.getElementById('theme-select');
   const settingsOverlay = document.getElementById('settings-overlay');
   const reorderToggle = document.getElementById('reorder-toggle-btn');
