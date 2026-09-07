@@ -940,6 +940,7 @@
               <div class="review-tabs" role="tablist" aria-label="クイズ履歴">
                 <button type="button" class="review-tab active" data-review-tab="music" role="tab" aria-selected="true">音楽記号</button>
                 <button type="button" class="review-tab" data-review-tab="forest" role="tab" aria-selected="false">人生は森のなかの1日</button>
+                <button type="button" class="review-tab" data-review-tab="kahi" role="tab" aria-selected="false">歌碑</button>
               </div>
               <div id="music-review-panel" class="review-panel">
                 <div id="music-quiz-review-list" class="weak-list"></div>
@@ -951,6 +952,14 @@
                 </div>
                 <div id="forest-focus-review-list" class="weak-list"></div>
                 <div id="forest-all-review-list" class="weak-list" hidden></div>
+              </div>
+              <div id="kahi-review-panel" class="review-panel" hidden>
+                <div class="review-tabs" role="tablist" aria-label="歌碑クイズの復習範囲">
+                  <button type="button" class="review-tab active" data-kahi-review-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
+                  <button type="button" class="review-tab" data-kahi-review-scope="all" role="tab" aria-selected="false">全体</button>
+                </div>
+                <div id="kahi-focus-review-list" class="weak-list"></div>
+                <div id="kahi-all-review-list" class="weak-list" hidden></div>
               </div>
               <button id="quiz-reset-btn" type="button" class="secondary-btn danger" style="margin-top:12px;">すべての復習履歴をリセット</button>
             </div>
@@ -978,7 +987,10 @@
           <div class="card">
             <h2 class="card-title">🪧 歌碑　復習クイズ</h2>
             <p class="quiz-lead">歌碑の練習内容を思い出しながら、自己採点で確認します。</p>
-            <div id="kahi-quiz-status" class="quiz-status"></div>
+            <div class="forest-progress-grid">
+              <div id="kahi-focus-status" class="quiz-status"></div>
+              <div id="kahi-all-status" class="quiz-status"></div>
+            </div>
             <button id="kahi-quiz-start-btn" type="button" class="primary-btn" style="margin-top:14px;">このクイズを始める</button>
           </div>
         </div>
@@ -1019,6 +1031,23 @@
         <div style="text-align:center;padding:2px 0 8px;">
           <button id="kahi-quiz-back" type="button" class="secondary-btn">← クイズの種類を選ぶ</button>
         </div>
+      </div>
+
+      <div id="kahi-mode-screen" style="display:none;">
+        <div class="card">
+          <h2 class="card-title">🪧 歌碑　復習クイズ</h2>
+          <p class="quiz-lead">出題範囲を選んでください。</p>
+          <div class="review-tabs" role="tablist" aria-label="歌碑クイズの出題範囲">
+            <button type="button" class="review-tab active" data-kahi-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
+            <button type="button" class="review-tab" data-kahi-scope="all" role="tab" aria-selected="false">全体</button>
+          </div>
+          <p id="kahi-focus-note" class="quiz-lead" style="margin-top:8px;"></p>
+          <div class="excel-quiz-mode-grid">
+            <button type="button" class="excel-quiz-mode-btn" data-kahi-count="all">全問に挑戦</button>
+            <button type="button" class="excel-quiz-mode-btn" data-kahi-count="mistakes">間違えた問題だけ復習</button>
+          </div>
+        </div>
+        <div style="text-align:center;padding:2px 0 8px;"><button id="kahi-mode-back-btn" type="button" class="secondary-btn">← クイズの種類を選ぶ</button></div>
       </div>
 
       <div id="music-mode-screen" style="display:none;">
@@ -3175,6 +3204,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const main = document.getElementById('quiz-main-screen');
     const forestMain = document.getElementById('excel-quiz-main');
     const kahiMain = document.getElementById('kahi-quiz-main');
+    const kahiMode = document.getElementById('kahi-mode-screen');
     if (start) start.style.display = '';
     if (menu) menu.style.display = 'none';
     if (forestMode) forestMode.style.display = 'none';
@@ -3182,6 +3212,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     if (main) main.style.display = 'none';
     if (forestMain) forestMain.style.display = 'none';
     if (kahiMain) kahiMain.style.display = 'none';
+    if (kahiMode) kahiMode.style.display = 'none';
     renderStatus();
     renderReview();
   }
@@ -3193,6 +3224,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const main = document.getElementById('quiz-main-screen');
     const forestMain = document.getElementById('excel-quiz-main');
     const kahiMain = document.getElementById('kahi-quiz-main');
+    const kahiMode = document.getElementById('kahi-mode-screen');
     if (start) start.style.display = 'none';
     if (menu) menu.style.display = '';
     if (forestMode) forestMode.style.display = 'none';
@@ -3200,6 +3232,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     if (main) main.style.display = 'none';
     if (forestMain) forestMain.style.display = 'none';
     if (kahiMain) kahiMain.style.display = 'none';
+    if (kahiMode) kahiMode.style.display = 'none';
     renderStatus();
   }
   function showQuizScreen(mistakesOnly = false) {
@@ -3259,6 +3292,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       });
       document.getElementById('music-review-panel').hidden = tab !== 'music';
       document.getElementById('forest-review-panel').hidden = tab !== 'forest';
+      document.getElementById('kahi-review-panel').hidden = tab !== 'kahi';
     }));
 
     const nextBtn = document.getElementById('quiz-next-btn');
@@ -3275,6 +3309,9 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       localStorage.removeItem('mori_forest_review_quiz_history');
       localStorage.removeItem('mori_forest_review_quiz_history_focus');
       localStorage.removeItem('mori_forest_review_quiz_history_all');
+      localStorage.removeItem('mori_kahi_review_quiz_history');
+      localStorage.removeItem('mori_kahi_review_quiz_history_focus');
+      localStorage.removeItem('mori_kahi_review_quiz_history_all');
       document.dispatchEvent(new Event('mori-review-reset'));
       quizSession = [];
       showStartScreen();
@@ -3564,34 +3601,125 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
 /* ── 歌碑 自己採点クイズ ── */
 (function() {
   const quiz = window.MORI_KAHI_REVIEW_QUIZ;
-  const historyKey = 'mori_kahi_review_quiz_history';
+  const reviewKeys = { focus: 'mori_kahi_review_quiz_history_focus', all: 'mori_kahi_review_quiz_history_all' };
+  const legacyKey = 'mori_kahi_review_quiz_history';
+  const partFocus = {
+    Sop: ['全体', 'ソプラノ', '女声', '高声', '外声'],
+    Alt: ['全体', 'アルト', '女声', '低声', '内声'],
+    Ten: ['全体', 'テナー', '男声', '高声', '内声'],
+    Bass: ['全体', 'ベース', '男声', '低声', '外声']
+  };
+  const reviewPages = { focus: 0, all: 0 };
+  const reviewPageSize = 5;
   let position = 0;
   let correct = 0;
   let answered = false;
+  let session = [];
+  let selectedScope = 'focus';
 
   const byId = id => document.getElementById(id);
   const escapeHtml = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-  const loadHistory = () => {
-    try { return JSON.parse(localStorage.getItem(historyKey) || '{}'); }
-    catch (error) { return {}; }
+  const loadHistory = (scope = selectedScope) => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(reviewKeys[scope]) || '{}');
+      const legacy = JSON.parse(localStorage.getItem(legacyKey) || '{}');
+      if (scope !== 'all') return saved;
+      const focus = JSON.parse(localStorage.getItem(reviewKeys.focus) || '{}');
+      const merged = {};
+      [legacy, saved, focus].forEach(history => Object.entries(history).forEach(([id, item]) => {
+        if (!merged[id] || (item.answeredAt || 0) >= (merged[id].answeredAt || 0)) merged[id] = item;
+      }));
+      return merged;
+    } catch (error) { return {}; }
+  };
+  const saveHistory = (scope, history) => localStorage.setItem(reviewKeys[scope], JSON.stringify(history));
+  const getPartFocus = () => {
+    const storedPart = localStorage.getItem('mori_otori_part');
+    const inputPart = byId('input-part');
+    const setupPart = byId('setup-part');
+    const formPart = (inputPart ? inputPart.value : '') || (setupPart ? setupPart.value : '');
+    const part = partFocus[storedPart] || storedPart === '指揮者' ? storedPart : formPart;
+    if (partFocus[part] || part === '指揮者') localStorage.setItem('mori_otori_part', part);
+    if (part === '指揮者') return { part, targets: null, message: 'あなたは指揮者なので全パートの問題を出題します。' };
+    if (!partFocus[part]) return { part: null, targets: [], message: 'パート情報を確認できません。プロフィールでパートを登録してください。' };
+    return { part, targets: partFocus[part], message: `あなたのパート（${part}）に合わせて、「${partFocus[part].join('・')}」の問題を出題します。` };
+  };
+  const getFocusedQuestions = () => {
+    const focus = getPartFocus();
+    if (!focus.part) return null;
+    if (!focus.targets) return quiz.questions;
+    return quiz.questions.filter(question => focus.targets.includes(quiz.targetById[question.id] || '全体'));
   };
   const renderStatus = () => {
-    const status = byId('kahi-quiz-status');
-    if (!status || !quiz) return;
-    const history = loadHistory();
-    const completed = Object.keys(history).length;
-    const correctCount = Object.values(history).filter(item => item.correct).length;
-    status.innerHTML = `<strong>進捗</strong><br>${completed}/${quiz.questions.length}問｜正解 ${correctCount}問`;
+    if (!quiz) return;
+    ['focus', 'all'].forEach(scope => {
+      const status = byId(`kahi-${scope}-status`);
+      if (!status) return;
+      const source = scope === 'focus' ? getFocusedQuestions() : quiz.questions;
+      const label = scope === 'focus' ? 'パートフォーカス' : '全体';
+      if (!source) {
+        status.textContent = `${label}：パート情報を確認できません`;
+        return;
+      }
+      const history = loadHistory(scope);
+      const completed = source.filter(question => history[question.id]).length;
+      const correctCount = source.filter(question => history[question.id]?.correct).length;
+      const rate = completed ? Math.round(correctCount / completed * 100) : 0;
+      status.innerHTML = `<strong>${label}</strong><br>${completed}/${source.length}問｜正解 ${correctCount}問｜${rate}%`;
+    });
+  };
+  const renderFocusNote = () => {
+    const note = byId('kahi-focus-note');
+    if (note) note.textContent = selectedScope === 'all' ? `全${quiz.questions.length}問を対象に出題します。` : getPartFocus().message;
+  };
+  const renderReview = (scope = 'focus') => {
+    const list = byId(`kahi-${scope}-review-list`);
+    if (!list) return;
+    const source = scope === 'focus' ? getFocusedQuestions() : quiz.questions;
+    const history = loadHistory(scope);
+    if (!source) {
+      list.innerHTML = '<div class="empty">パート情報を確認できません</div>';
+      return;
+    }
+    const missed = source.map(question => [String(question.id), history[question.id]])
+      .filter(([, item]) => item && !item.correct)
+      .sort((a, b) => b[1].answeredAt - a[1].answeredAt);
+    if (!missed.length) {
+      list.innerHTML = '<div class="empty">まだ間違えた問題はありません</div>';
+      return;
+    }
+    const pages = Math.ceil(missed.length / reviewPageSize);
+    reviewPages[scope] = Math.min(reviewPages[scope], pages - 1);
+    const items = missed.slice(reviewPages[scope] * reviewPageSize, (reviewPages[scope] + 1) * reviewPageSize);
+    list.innerHTML = items.map(([id]) => {
+      const question = quiz.questions.find(item => String(item.id) === id);
+      return `<div class="weak-item">🔁 <strong>${escapeHtml(question.question)}</strong><br><span style="font-size:.8rem;">正解：${question.answers.map(escapeHtml).join('<br>')}</span></div>`;
+    }).join('') + (pages > 1 ? `<div class="review-pagination"><button type="button" class="review-page-btn" data-kahi-review-page="prev" ${reviewPages[scope] === 0 ? 'disabled' : ''}>← 前へ</button><span>${reviewPages[scope] + 1} / ${pages}</span><button type="button" class="review-page-btn" data-kahi-review-page="next" ${reviewPages[scope] + 1 === pages ? 'disabled' : ''}>次へ →</button></div>` : '');
+    list.querySelectorAll('[data-kahi-review-page]').forEach(button => button.addEventListener('click', () => {
+      reviewPages[scope] += button.dataset.kahiReviewPage === 'next' ? 1 : -1;
+      renderReview(scope);
+    }));
   };
   const showMenu = () => {
     byId('kahi-quiz-main').style.display = 'none';
+    byId('kahi-mode-screen').style.display = 'none';
     byId('quiz-menu-screen').style.display = '';
     renderStatus();
   };
+  const showModes = () => {
+    byId('quiz-start-screen').style.display = 'none';
+    byId('quiz-menu-screen').style.display = 'none';
+    byId('kahi-quiz-main').style.display = 'none';
+    byId('kahi-mode-screen').style.display = '';
+    renderStatus();
+    renderFocusNote();
+    renderReview('focus');
+    renderReview('all');
+  };
   const renderQuestion = () => {
-    const question = quiz.questions[position];
+    const question = session[position];
     answered = false;
-    byId('kahi-quiz-progress').textContent = `問題 ${position + 1} / ${quiz.questions.length}　｜　正解 ${correct} 問`;
+    byId('kahi-quiz-progress').textContent = `問題 ${position + 1} / ${session.length}　｜　正解 ${correct} 問`;
     byId('kahi-quiz-question').textContent = question.question;
     const count = question.answer_count || question.answers.length;
     byId('kahi-quiz-answers').className = 'quiz-feedback';
@@ -3614,42 +3742,91 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     if (answered) return;
     answered = true;
     if (isCorrect) correct++;
-    const history = loadHistory();
-    history[quiz.questions[position].id] = { correct: isCorrect, answeredAt: Date.now() };
-    localStorage.setItem(historyKey, JSON.stringify(history));
+    const question = session[position];
+    const attempt = { correct: isCorrect, answeredAt: Date.now() };
+    const history = loadHistory(selectedScope);
+    history[question.id] = attempt;
+    saveHistory(selectedScope, history);
+    if (selectedScope === 'focus') {
+      const allHistory = loadHistory('all');
+      allHistory[question.id] = attempt;
+      saveHistory('all', allHistory);
+    } else if (getFocusedQuestions()?.some(item => item.id === question.id)) {
+      const focusHistory = loadHistory('focus');
+      focusHistory[question.id] = attempt;
+      saveHistory('focus', focusHistory);
+    }
     byId('kahi-quiz-score-actions').style.display = 'none';
-    byId('kahi-quiz-next').textContent = position + 1 === quiz.questions.length ? '結果を見る' : '次の問題へ';
+    byId('kahi-quiz-next').textContent = position + 1 === session.length ? '結果を見る' : '次の問題へ';
     byId('kahi-quiz-next').style.display = '';
     renderStatus();
+    renderReview('focus');
+    renderReview('all');
   };
   const renderResult = () => {
     byId('kahi-quiz-progress').textContent = '結果';
-    byId('kahi-quiz-question').innerHTML = `<div class="excel-quiz-result"><strong>${quiz.questions.length}問中 ${correct}問 正解</strong><br>正答率：${Math.round(correct / quiz.questions.length * 100)}%</div>`;
+    byId('kahi-quiz-question').innerHTML = `<div class="excel-quiz-result"><strong>${session.length}問中 ${correct}問 正解</strong><br>正答率：${Math.round(correct / session.length * 100)}%</div>`;
     byId('kahi-quiz-answers').className = 'quiz-feedback';
     byId('kahi-quiz-answers').innerHTML = '';
     byId('kahi-quiz-next').style.display = 'none';
   };
-  const start = () => {
+  const start = count => {
     if (!quiz) return;
+    selectedScope = document.querySelector('[data-kahi-scope].active')?.dataset.kahiScope || 'focus';
+    const source = selectedScope === 'focus' ? getFocusedQuestions() : quiz.questions;
+    if (!source) {
+      alert('パート情報を確認できません。プロフィールでパートを登録してください。');
+      return;
+    }
+    const history = loadHistory(selectedScope);
+    const candidates = count === 'mistakes' ? source.filter(question => history[question.id] && !history[question.id].correct) : source;
+    if (!candidates.length) {
+      alert('復習する間違い問題はまだありません。');
+      return;
+    }
+    session = [...candidates].sort(() => Math.random() - 0.5);
     position = 0;
     correct = 0;
     byId('quiz-menu-screen').style.display = 'none';
+    byId('kahi-mode-screen').style.display = 'none';
     byId('kahi-quiz-main').style.display = '';
     renderQuestion();
   };
   document.addEventListener('DOMContentLoaded', () => {
     if (!quiz) return;
     renderStatus();
-    byId('kahi-quiz-start-btn').addEventListener('click', start);
+    byId('kahi-quiz-start-btn').addEventListener('click', showModes);
+    document.querySelectorAll('[data-kahi-count]').forEach(button => button.addEventListener('click', () => start(button.dataset.kahiCount)));
+    document.querySelectorAll('[data-kahi-scope]').forEach(button => button.addEventListener('click', () => {
+      selectedScope = button.dataset.kahiScope;
+      document.querySelectorAll('[data-kahi-scope]').forEach(item => {
+        const active = item.dataset.kahiScope === selectedScope;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-selected', String(active));
+      });
+      renderFocusNote();
+    }));
+    document.querySelectorAll('[data-kahi-review-scope]').forEach(button => button.addEventListener('click', () => {
+      const scope = button.dataset.kahiReviewScope;
+      document.querySelectorAll('[data-kahi-review-scope]').forEach(item => {
+        const active = item.dataset.kahiReviewScope === scope;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-selected', String(active));
+      });
+      byId('kahi-focus-review-list').hidden = scope !== 'focus';
+      byId('kahi-all-review-list').hidden = scope !== 'all';
+    }));
     byId('kahi-quiz-reveal').addEventListener('click', reveal);
     byId('kahi-quiz-correct').addEventListener('click', () => score(true));
     byId('kahi-quiz-wrong').addEventListener('click', () => score(false));
     byId('kahi-quiz-next').addEventListener('click', () => {
       if (!answered) return;
-      if (position + 1 === quiz.questions.length) renderResult();
+      if (position + 1 === session.length) renderResult();
       else { position++; renderQuestion(); }
     });
+    byId('kahi-mode-back-btn').addEventListener('click', showMenu);
     byId('kahi-quiz-back').addEventListener('click', showMenu);
+    document.addEventListener('mori-review-reset', () => { renderReview('focus'); renderReview('all'); renderStatus(); });
   });
 })();
 </script>
