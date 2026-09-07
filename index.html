@@ -1029,7 +1029,7 @@
           </div>
           <div class="card">
             <h2 id="excel-quiz-title" class="card-title">🌲 人生は森のなかの1日　復習クイズ</h2>
-            <p class="quiz-lead">曲の練習内容を4択で確認します。</p>
+            <p class="quiz-lead">曲の練習内容を思い出しながら、自己採点で確認します。</p>
             <div class="forest-progress-grid">
               <div id="forest-focus-status" class="quiz-status"></div>
               <div id="forest-all-status" class="quiz-status"></div>
@@ -1134,8 +1134,12 @@
             <div id="excel-quiz-progress" class="excel-quiz-progress"></div>
             <div id="excel-quiz-meta" class="quiz-question-meta"></div>
             <div id="excel-quiz-question" class="quiz-question"></div>
-            <div id="excel-quiz-choices" class="quiz-choice-list"></div>
             <div id="excel-quiz-feedback" class="quiz-feedback" aria-live="polite"></div>
+            <button id="excel-quiz-reveal" type="button" class="primary-btn">答えを見る</button>
+            <div id="excel-quiz-score-actions" class="excel-quiz-mode-grid" style="display:none;">
+              <button id="excel-quiz-correct" type="button" class="excel-quiz-mode-btn">正解</button>
+              <button id="excel-quiz-wrong" type="button" class="excel-quiz-mode-btn">不正解</button>
+            </div>
             <button id="excel-quiz-next" type="button" class="primary-btn" style="display:none;">次の問題へ</button>
           </div>
           <div style="text-align:center;padding:2px 0 8px;">
@@ -3377,7 +3381,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
 <script src="kahi_review_quiz_data.js"></script>
 <script>
 (function() {
-  const data = window.MORI_EXCEL_QUIZ_GZIP_BASE64;
+  const csvUrl = '人生は森のなかの1日_復習クイズ_ver3_1.csv';
   let questions = [];
   let session = [];
   let position = 0;
@@ -3390,10 +3394,10 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   const REVIEW_KEYS = { focus: 'mori_forest_review_quiz_history_focus', all: 'mori_forest_review_quiz_history_all' };
   let selectedScope = 'focus';
   const PART_FOCUS = {
-    Sop: ['全体', '女声', 'ソプラノ'],
-    Alt: ['全体', '女声', 'アルト'],
-    Ten: ['全体', '男声', 'テナー'],
-    Bass: ['全体', '男声', 'ベース']
+    Sop: ['全体', '全パート', '女声', 'ソプラノ', '高声'],
+    Alt: ['全体', '全パート', '女声', 'アルト', '低声', '内声'],
+    Ten: ['全体', '全パート', '男声', 'テナー', '高声', '内声'],
+    Bass: ['全体', '全パート', '男声', 'ベース', '低声', '外声', 'ローベース']
   };
 
   const byId = id => document.getElementById(id);
@@ -3407,11 +3411,36 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     return result;
   };
   async function loadQuestions() {
-    if (!data || !('DecompressionStream' in window)) throw new Error('クイズデータを読み込めませんでした。');
-    const binary = atob(data);
-    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
-    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-    questions = JSON.parse(await new Response(stream).text());
+    const response = await fetch(csvUrl);
+    if (!response.ok) throw new Error('クイズCSVを読み込めませんでした。');
+    const csv = (await response.text()).replace(/^\uFEFF/, '');
+    const rows = [];
+    let row = [], cell = '', quoted = false;
+    for (let index = 0; index < csv.length; index++) {
+      const character = csv[index];
+      if (character === '"' && csv[index + 1] === '"' && quoted) { cell += '"'; index++; continue; }
+      if (character === '"') { quoted = !quoted; continue; }
+      if (character === ',' && !quoted) { row.push(cell); cell = ''; continue; }
+      if ((character === '\n' || character === '\r') && !quoted) {
+        if (character === '\r' && csv[index + 1] === '\n') index++;
+        row.push(cell); cell = '';
+        if (row.some(value => value.trim())) rows.push(row);
+        row = [];
+        continue;
+      }
+      cell += character;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    const headers = rows.shift().map(value => value.trim());
+    const column = name => headers.indexOf(name);
+    questions = rows.map((values, index) => ({
+      id: String(index + 1),
+      question: values[column('問題文')]?.trim() || '',
+      answer: values[column('解答')]?.trim() || '',
+      section: values[column('小節')]?.trim() || '',
+      target: values[column('対象')]?.trim() || '全体',
+      category: values[column('カテゴリ')]?.trim() || ''
+    })).filter(question => question.question && question.answer);
   }
   function loadHistory(scope = selectedScope) {
     try {
@@ -3459,7 +3488,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   function renderFocusNote() {
     const note = byId('forest-focus-note');
     if (!note) return;
-    note.textContent = selectedScope === 'all' ? '全88問を対象に出題します。' : getPartFocus().message;
+    note.textContent = selectedScope === 'all' ? `全${questions.length}問を対象に出題します。` : getPartFocus().message;
   }
   function renderStatus() {
     if (!questions.length) return;
@@ -3500,7 +3529,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     list.innerHTML = pageItems.map(([id]) => {
       const question = questions.find(item => item.id === id);
       if (!question) return '';
-      return `<div class="weak-item">🔁 <strong>${escapeHtml(question.question)}</strong><br><span style="font-size:.8rem;">正解：${escapeHtml(question.choices[question.answer])}</span></div>`;
+      return `<div class="weak-item">🔁 <strong>${escapeHtml(question.question)}</strong><br><span style="font-size:.8rem;">正解：${escapeHtml(question.answer)}</span></div>`;
     }).join('') + (pages > 1 ? `<div class="review-pagination"><button type="button" class="review-page-btn" data-forest-review-page="prev" ${forestReviewPages[scope] === 0 ? 'disabled' : ''}>← 前へ</button><span>${forestReviewPages[scope] + 1} / ${pages}</span><button type="button" class="review-page-btn" data-forest-review-page="next" ${forestReviewPages[scope] + 1 === pages ? 'disabled' : ''}>次へ →</button></div>` : '');
     list.querySelectorAll('[data-forest-review-page]').forEach(button => button.addEventListener('click', () => {
       forestReviewPages[scope] += button.dataset.forestReviewPage === 'next' ? 1 : -1;
@@ -3521,26 +3550,31 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const question = session[position];
     answered = false;
     byId('excel-quiz-progress').textContent = `問題 ${position + 1} / ${session.length}　｜　正解 ${correct} 問`;
-    byId('excel-quiz-meta').textContent = `${question.category}｜${question.measure}｜${question.target}`;
+    byId('excel-quiz-meta').textContent = `${question.category}｜${question.section}｜${question.target}`;
     byId('excel-quiz-question').textContent = question.question;
-    const choices = shuffle(question.choices.map((text, index) => ({ text, isCorrect: index === question.answer })));
-    byId('excel-quiz-choices').innerHTML = choices.map((choice, index) =>
-      `<button type="button" class="quiz-choice-btn" data-index="${index}" data-correct="${choice.isCorrect}">${escapeHtml(choice.text)}</button>`
-    ).join('') + '<button type="button" class="quiz-unknown-btn" data-index="-1" data-correct="false">分からない</button>';
     const feedback = byId('excel-quiz-feedback');
     feedback.className = 'quiz-feedback';
     feedback.textContent = '';
+    byId('excel-quiz-reveal').style.display = '';
+    byId('excel-quiz-score-actions').style.display = 'none';
     byId('excel-quiz-next').style.display = 'none';
-    byId('excel-quiz-choices').querySelectorAll('button').forEach(button => button.addEventListener('click', () => answer(button)));
   }
-  function answer(button) {
+  function reveal() {
+    if (answered) return;
+    const question = session[position];
+    const feedback = byId('excel-quiz-feedback');
+    feedback.className = 'quiz-feedback visible ok';
+    feedback.innerHTML = `<strong>答え</strong><br>${escapeHtml(question.answer)}`;
+    byId('excel-quiz-reveal').style.display = 'none';
+    byId('excel-quiz-score-actions').style.display = '';
+  }
+  function score(isCorrect) {
     if (answered) return;
     answered = true;
-    const ok = button.dataset.correct === 'true';
-    if (ok) correct++;
+    if (isCorrect) correct++;
     const question = session[position];
     const history = loadHistory(sessionScope);
-    const attempt = { correct: ok, answeredAt: Date.now() };
+    const attempt = { correct: isCorrect, answeredAt: Date.now() };
     history[question.id] = attempt;
     saveHistory(history, sessionScope);
     if (sessionScope === 'focus') {
@@ -3558,15 +3592,10 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     renderStatus();
     renderReview('focus');
     renderReview('all');
-    byId('excel-quiz-choices').querySelectorAll('button').forEach(item => {
-      item.disabled = true;
-      if (item.dataset.correct === 'true') item.classList.add('correct');
-      else if (item === button) item.classList.add('wrong');
-    });
+    byId('excel-quiz-score-actions').style.display = 'none';
     const feedback = byId('excel-quiz-feedback');
-    const message = ok ? '正解！' : (button.dataset.index === '-1' ? '頑張ろう！' : '惜しい！');
-    feedback.className = `quiz-feedback visible ${ok ? 'ok' : 'ng'}`;
-    feedback.innerHTML = ok ? '<strong>正解！</strong>' : `<strong>${message}</strong><br>正解を確認して次へ進みましょう。`;
+    feedback.className = `quiz-feedback visible ${isCorrect ? 'ok' : 'ng'}`;
+    feedback.innerHTML = isCorrect ? '<strong>正解として記録しました。</strong>' : '<strong>不正解として記録しました。</strong>';
     byId('excel-quiz-next').textContent = position + 1 === session.length ? '結果を見る' : '次の問題へ';
     byId('excel-quiz-next').style.display = 'block';
   }
@@ -3574,7 +3603,8 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     byId('excel-quiz-progress').textContent = '結果';
     byId('excel-quiz-meta').textContent = '';
     byId('excel-quiz-question').innerHTML = `<div class="excel-quiz-result"><strong>${session.length}問中 ${correct}問 正解</strong><br>正答率：${Math.round(correct / session.length * 100)}%</div>`;
-    byId('excel-quiz-choices').innerHTML = '';
+    byId('excel-quiz-reveal').style.display = 'none';
+    byId('excel-quiz-score-actions').style.display = 'none';
     const feedback = byId('excel-quiz-feedback');
     feedback.className = 'quiz-feedback';
     byId('excel-quiz-next').style.display = 'none';
@@ -3603,7 +3633,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       byId('excel-quiz-main').style.display = '';
       renderQuestion();
     } catch (error) {
-      alert('復習クイズの開始に失敗しました。HTMLと mori_practice_quiz_data.js を同じフォルダに置いてください。');
+      alert('復習クイズの開始に失敗しました。HTMLとCSVファイルを同じフォルダに置いてください。');
     }
   }
   document.addEventListener('DOMContentLoaded', () => {
@@ -3615,6 +3645,9 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       synchronizeFocusHistoryWithAll(); renderReview('focus'); renderReview('all'); renderStatus();
     }).catch(() => {});
     byId('forest-mode-btn').addEventListener('click', showForestModes);
+    byId('excel-quiz-reveal').addEventListener('click', reveal);
+    byId('excel-quiz-correct').addEventListener('click', () => score(true));
+    byId('excel-quiz-wrong').addEventListener('click', () => score(false));
     document.querySelectorAll('[data-forest-scope]').forEach(button => button.addEventListener('click', () => {
       selectedScope = button.dataset.forestScope;
       document.querySelectorAll('[data-forest-scope]').forEach(item => {
