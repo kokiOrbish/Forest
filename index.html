@@ -975,6 +975,12 @@
             </div>
             <button id="forest-mode-btn" type="button" class="primary-btn" style="margin-top:14px;">このクイズを始める</button>
           </div>
+          <div class="card">
+            <h2 class="card-title">🪧 歌碑　復習クイズ</h2>
+            <p class="quiz-lead">歌碑の練習内容を思い出しながら、自己採点で確認します。</p>
+            <div id="kahi-quiz-status" class="quiz-status"></div>
+            <button id="kahi-quiz-start-btn" type="button" class="primary-btn" style="margin-top:14px;">このクイズを始める</button>
+          </div>
         </div>
         <div style="text-align:center;padding:2px 0 8px;"><button id="quiz-menu-back-btn" type="button" class="secondary-btn">← スタートに戻る</button></div>
       </div>
@@ -996,6 +1002,23 @@
           </div>
         </div>
         <div style="text-align:center;padding:2px 0 8px;"><button id="forest-mode-back-btn" type="button" class="secondary-btn">← クイズの種類を選ぶ</button></div>
+      </div>
+
+      <div id="kahi-quiz-main" style="display:none;">
+        <div class="card">
+          <div id="kahi-quiz-progress" class="excel-quiz-progress"></div>
+          <div id="kahi-quiz-question" class="quiz-question"></div>
+          <div id="kahi-quiz-answers" class="quiz-feedback"></div>
+          <button id="kahi-quiz-reveal" type="button" class="primary-btn">答えを見る</button>
+          <div id="kahi-quiz-score-actions" class="excel-quiz-mode-grid" style="display:none;">
+            <button id="kahi-quiz-correct" type="button" class="excel-quiz-mode-btn">正解</button>
+            <button id="kahi-quiz-wrong" type="button" class="excel-quiz-mode-btn">不正解</button>
+          </div>
+          <button id="kahi-quiz-next" type="button" class="primary-btn" style="display:none;">次の問題へ</button>
+        </div>
+        <div style="text-align:center;padding:2px 0 8px;">
+          <button id="kahi-quiz-back" type="button" class="secondary-btn">← クイズの種類を選ぶ</button>
+        </div>
       </div>
 
       <div id="music-mode-screen" style="display:none;">
@@ -3151,12 +3174,14 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const musicMode = document.getElementById('music-mode-screen');
     const main = document.getElementById('quiz-main-screen');
     const forestMain = document.getElementById('excel-quiz-main');
+    const kahiMain = document.getElementById('kahi-quiz-main');
     if (start) start.style.display = '';
     if (menu) menu.style.display = 'none';
     if (forestMode) forestMode.style.display = 'none';
     if (musicMode) musicMode.style.display = 'none';
     if (main) main.style.display = 'none';
     if (forestMain) forestMain.style.display = 'none';
+    if (kahiMain) kahiMain.style.display = 'none';
     renderStatus();
     renderReview();
   }
@@ -3167,12 +3192,14 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const musicMode = document.getElementById('music-mode-screen');
     const main = document.getElementById('quiz-main-screen');
     const forestMain = document.getElementById('excel-quiz-main');
+    const kahiMain = document.getElementById('kahi-quiz-main');
     if (start) start.style.display = 'none';
     if (menu) menu.style.display = '';
     if (forestMode) forestMode.style.display = 'none';
     if (musicMode) musicMode.style.display = 'none';
     if (main) main.style.display = 'none';
     if (forestMain) forestMain.style.display = 'none';
+    if (kahiMain) kahiMain.style.display = 'none';
     renderStatus();
   }
   function showQuizScreen(mistakesOnly = false) {
@@ -3258,6 +3285,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
 </script>
 
 <script src="mori_practice_quiz_data.js"></script>
+<script src="kahi_review_quiz_data.js"></script>
 <script>
 (function() {
   const data = window.MORI_EXCEL_QUIZ_GZIP_BASE64;
@@ -3528,6 +3556,100 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     });
     byId('excel-quiz-back').addEventListener('click', showForestModes);
     document.addEventListener('mori-review-reset', () => { renderReview('focus'); renderReview('all'); renderStatus(); });
+  });
+})();
+</script>
+
+<script>
+/* ── 歌碑 自己採点クイズ ── */
+(function() {
+  const quiz = window.MORI_KAHI_REVIEW_QUIZ;
+  const historyKey = 'mori_kahi_review_quiz_history';
+  let position = 0;
+  let correct = 0;
+  let answered = false;
+
+  const byId = id => document.getElementById(id);
+  const escapeHtml = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  const loadHistory = () => {
+    try { return JSON.parse(localStorage.getItem(historyKey) || '{}'); }
+    catch (error) { return {}; }
+  };
+  const renderStatus = () => {
+    const status = byId('kahi-quiz-status');
+    if (!status || !quiz) return;
+    const history = loadHistory();
+    const completed = Object.keys(history).length;
+    const correctCount = Object.values(history).filter(item => item.correct).length;
+    status.innerHTML = `<strong>進捗</strong><br>${completed}/${quiz.questions.length}問｜正解 ${correctCount}問`;
+  };
+  const showMenu = () => {
+    byId('kahi-quiz-main').style.display = 'none';
+    byId('quiz-menu-screen').style.display = '';
+    renderStatus();
+  };
+  const renderQuestion = () => {
+    const question = quiz.questions[position];
+    answered = false;
+    byId('kahi-quiz-progress').textContent = `問題 ${position + 1} / ${quiz.questions.length}　｜　正解 ${correct} 問`;
+    byId('kahi-quiz-question').textContent = question.question;
+    const count = question.answer_count || question.answers.length;
+    byId('kahi-quiz-answers').className = 'quiz-feedback';
+    byId('kahi-quiz-answers').innerHTML = '';
+    byId('kahi-quiz-reveal').style.display = '';
+    byId('kahi-quiz-score-actions').style.display = 'none';
+    byId('kahi-quiz-next').style.display = 'none';
+    byId('kahi-quiz-reveal').dataset.count = count;
+  };
+  const reveal = () => {
+    if (answered) return;
+    const question = quiz.questions[position];
+    const note = question.answer_note ? `<br><small>${escapeHtml(question.answer_note)}</small>` : '';
+    byId('kahi-quiz-answers').className = 'quiz-feedback visible ok';
+    byId('kahi-quiz-answers').innerHTML = `<strong>答え（${question.answer_count}つ）</strong><br>${question.answers.map((answer, index) => `${index + 1}. ${escapeHtml(answer)}`).join('<br>')}${note}`;
+    byId('kahi-quiz-reveal').style.display = 'none';
+    byId('kahi-quiz-score-actions').style.display = '';
+  };
+  const score = isCorrect => {
+    if (answered) return;
+    answered = true;
+    if (isCorrect) correct++;
+    const history = loadHistory();
+    history[quiz.questions[position].id] = { correct: isCorrect, answeredAt: Date.now() };
+    localStorage.setItem(historyKey, JSON.stringify(history));
+    byId('kahi-quiz-score-actions').style.display = 'none';
+    byId('kahi-quiz-next').textContent = position + 1 === quiz.questions.length ? '結果を見る' : '次の問題へ';
+    byId('kahi-quiz-next').style.display = '';
+    renderStatus();
+  };
+  const renderResult = () => {
+    byId('kahi-quiz-progress').textContent = '結果';
+    byId('kahi-quiz-question').innerHTML = `<div class="excel-quiz-result"><strong>${quiz.questions.length}問中 ${correct}問 正解</strong><br>正答率：${Math.round(correct / quiz.questions.length * 100)}%</div>`;
+    byId('kahi-quiz-answers').className = 'quiz-feedback';
+    byId('kahi-quiz-answers').innerHTML = '';
+    byId('kahi-quiz-next').style.display = 'none';
+  };
+  const start = () => {
+    if (!quiz) return;
+    position = 0;
+    correct = 0;
+    byId('quiz-menu-screen').style.display = 'none';
+    byId('kahi-quiz-main').style.display = '';
+    renderQuestion();
+  };
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!quiz) return;
+    renderStatus();
+    byId('kahi-quiz-start-btn').addEventListener('click', start);
+    byId('kahi-quiz-reveal').addEventListener('click', reveal);
+    byId('kahi-quiz-correct').addEventListener('click', () => score(true));
+    byId('kahi-quiz-wrong').addEventListener('click', () => score(false));
+    byId('kahi-quiz-next').addEventListener('click', () => {
+      if (!answered) return;
+      if (position + 1 === quiz.questions.length) renderResult();
+      else { position++; renderQuestion(); }
+    });
+    byId('kahi-quiz-back').addEventListener('click', showMenu);
   });
 })();
 </script>
