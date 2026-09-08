@@ -627,10 +627,14 @@
     .quiz-start-options > .card { display: flex; flex-direction: column; gap: 10px; }
     .quiz-start-options > .card .primary-btn { margin-top: auto !important; }
     .review-tabs { display: flex; gap: 7px; margin: 12px 0; }
-    .review-tab { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; color: var(--sub); padding: 9px 8px; font: inherit; font-size: .8rem; font-weight: 900; cursor: pointer; }
+    .review-tab { flex: 1; min-width: 0; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; color: var(--sub); padding: 9px 8px; font: inherit; font-size: .8rem; font-weight: 900; cursor: pointer; overflow-wrap: anywhere; }
     .review-tab.active { background: var(--pale2); border-color: var(--main); color: var(--main); }
     .review-panel[hidden] { display: none; }
-    .quiz-review-body { white-space: normal; }
+    .quiz-review-body { white-space: normal; overflow: visible; }
+    .quiz-review-body .review-panel:not([hidden]),
+    .quiz-review-body .weak-list:not([hidden]) { display: flex; flex-direction: column; }
+    .quiz-review-body .weak-list:not([hidden]) { gap: 8px; }
+    .quiz-review-body .weak-item { overflow-wrap: anywhere; }
     .review-pagination { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 12px; color: var(--sub); font-size: .78rem; font-weight: 800; }
     .review-page-btn { border: 1px solid var(--border); border-radius: 999px; background: #fff; color: var(--main); padding: 5px 10px; font: inherit; font-size: .76rem; font-weight: 850; cursor: pointer; }
     .review-page-btn:disabled { color: #AAB5AA; border-color: #E4EAE4; cursor: default; }
@@ -1049,7 +1053,7 @@
           </div>
           <div class="card">
             <h2 id="excel-quiz-title" class="card-title">🌲 人生は森のなかの1日　復習クイズ</h2>
-            <p class="quiz-lead">曲の練習内容を思い出しながら、自己採点で確認します。</p>
+            <p class="quiz-lead">自由曲の練習内容を思い出しながら、自己採点で確認します。</p>
             <div class="forest-progress-grid">
               <div id="forest-focus-status" class="quiz-status"></div>
               <div id="forest-all-status" class="quiz-status"></div>
@@ -3366,9 +3370,12 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
         item.classList.toggle('active', active);
         item.setAttribute('aria-selected', String(active));
       });
-      document.getElementById('music-review-panel').hidden = tab !== 'music';
-      document.getElementById('forest-review-panel').hidden = tab !== 'forest';
-      document.getElementById('kahi-review-panel').hidden = tab !== 'kahi';
+      ['music', 'forest', 'kahi'].forEach(panelName => {
+        const panel = document.getElementById(`${panelName}-review-panel`);
+        const active = panelName === tab;
+        panel.hidden = !active;
+        panel.setAttribute('aria-hidden', String(!active));
+      });
     }));
 
     const nextBtn = document.getElementById('quiz-next-btn');
@@ -3497,7 +3504,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     if (PART_FOCUS[part] || part === '指揮者') localStorage.setItem('mori_otori_part', part);
     if (part === '指揮者') return { part, targets: null, message: 'あなたは指揮者なので全パートへの理解が求められます。全ての問題を出題します。' };
     if (!PART_FOCUS[part]) return { part: null, targets: [], message: 'パート情報を確認できません。プロフィールでパートを登録してください。' };
-    return { part, targets: PART_FOCUS[part], message: `あなたのパート（${part}）に合わせて、「${PART_FOCUS[part].join('・')}」の問題を出題します。` };
+    return { part, targets: PART_FOCUS[part], message: `あなたのパート（${part}）に関係する問題を出題します。` };
   }
   function getFocusedQuestions() {
     const focus = getPartFocus();
