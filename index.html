@@ -35,6 +35,7 @@
     body[data-theme="cyan"] { --bg:#F0FAFC; --main:#167C91; --main2:#36A8B9; --main-dark:#0B5264; --pale:#CDEDF2; --pale2:#E5F7F9; --border:#D3E9ED; --shadow:0 2px 12px rgba(22,124,145,.10); --shadow-md:0 4px 20px rgba(22,124,145,.14); }
     body[data-theme="orange"] { --bg:#FFF8EF; --main:#C7651D; --main2:#E58A35; --main-dark:#843B12; --pale:#F6DEC5; --pale2:#FCEEDF; --border:#EEDBC7; --shadow:0 2px 12px rgba(199,101,29,.10); --shadow-md:0 4px 20px rgba(199,101,29,.14); }
     body[data-theme="black"] { --bg:#F4F4F4; --main:#303030; --main2:#555; --main-dark:#111; --pale:#D9D9D9; --pale2:#EBEBEB; --border:#D7D7D7; --shadow:0 2px 12px rgba(0,0,0,.10); --shadow-md:0 4px 20px rgba(0,0,0,.16); }
+    body[data-theme="silver"] { --bg:#F5F7FA; --main:#66717F; --main2:#9AA5B1; --main-dark:#39424E; --pale:#DDE3EA; --pale2:#EDF1F5; --border:#D8DEE6; --shadow:0 2px 12px rgba(57,66,78,.10); --shadow-md:0 4px 20px rgba(57,66,78,.14); }
     body[data-theme="purple"] { --bg:#F8F4FC; --main:#70459A; --main2:#9667BD; --main-dark:#482A69; --pale:#E4D7F0; --pale2:#F0E9F7; --border:#E3D9EC; --shadow:0 2px 12px rgba(112,69,154,.10); --shadow-md:0 4px 20px rgba(112,69,154,.14); }
     body[data-theme="brown"] { --bg:#FAF6F1; --main:#815331; --main2:#A8784E; --main-dark:#51311E; --pale:#E9D8C7; --pale2:#F3E9DE; --border:#E5D9CC; --shadow:0 2px 12px rgba(129,83,49,.10); --shadow-md:0 4px 20px rgba(129,83,49,.14); }
     body[data-theme="gold"] { --bg:#FFFBF0; --main:#B87908; --main2:#E6B83F; --main-dark:#6B4300; --pale:#F4E1A8; --pale2:#FFF6D8; --border:#EADDBA; --shadow:0 2px 12px rgba(184,121,8,.10); --shadow-md:0 4px 20px rgba(184,121,8,.14); }
@@ -742,6 +743,7 @@
           <option value="cyan">水色</option>
           <option value="orange">橙</option>
           <option value="black">黒</option>
+          <option value="silver">銀</option>
           <option value="purple">紫</option>
           <option value="brown">茶</option>
           <option value="gold">金</option>
@@ -5261,7 +5263,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     notifySettingsChanged();
   }
   function applyTheme(theme) {
-    const allowed = ['green', 'red', 'cyan', 'orange', 'black', 'purple', 'brown', 'gold', 'peach', 'navy'];
+    const allowed = ['green', 'red', 'cyan', 'orange', 'black', 'silver', 'purple', 'brown', 'gold', 'peach', 'navy'];
     const chosen = allowed.includes(theme) ? theme : 'green';
     document.body.dataset.theme = chosen;
     if (themeSelect) themeSelect.value = chosen;
