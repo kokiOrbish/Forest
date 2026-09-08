@@ -3258,7 +3258,9 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const el = document.getElementById('music-quiz-review-list');
     if (!el) return;
     const history = loadHistory();
-    const entries = Object.entries(history).filter(([, h]) => !h.correct).sort((a, b) => b[1].answeredAt - a[1].answeredAt);
+    const entries = Object.entries(history)
+      .filter(([id, h]) => !h.correct && QUIZ_DATA.some(question => question.id === id))
+      .sort((a, b) => b[1].answeredAt - a[1].answeredAt);
     if (!entries.length) {
       el.innerHTML = '<div class="empty">まだ間違えた問題はありません</div>';
       return;
@@ -3545,7 +3547,9 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
         if (!item.correct) history[id] = item;
       });
     }
-    const missed = Object.entries(history).filter(([, item]) => !item.correct).sort((a, b) => b[1].answeredAt - a[1].answeredAt);
+    const missed = Object.entries(history)
+      .filter(([id, item]) => !item.correct && questions.some(question => question.id === id))
+      .sort((a, b) => b[1].answeredAt - a[1].answeredAt);
     if (!missed.length) {
       list.innerHTML = '<div class="empty">まだ間違えた問題はありません</div>';
       return;
@@ -3798,7 +3802,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       list.innerHTML = '<div class="empty">パート情報を確認できません</div>';
       return;
     }
-    const missed = source.map(question => [String(question.id), history[question.id]])
+    const missed = source.map(question => [question, history[question.id]])
       .filter(([, item]) => item && !item.correct)
       .sort((a, b) => b[1].answeredAt - a[1].answeredAt);
     if (!missed.length) {
@@ -3808,8 +3812,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const pages = Math.ceil(missed.length / reviewPageSize);
     reviewPages[scope] = Math.min(reviewPages[scope], pages - 1);
     const items = missed.slice(reviewPages[scope] * reviewPageSize, (reviewPages[scope] + 1) * reviewPageSize);
-    list.innerHTML = items.map(([id]) => {
-      const question = quiz.questions.find(item => String(item.id) === id);
+    list.innerHTML = items.map(([question]) => {
       return `<div class="weak-item">🔁 <strong>${escapeHtml(question.question)}</strong><br><span style="font-size:.8rem;">正解：${question.answers.map(escapeHtml).join('<br>')}</span></div>`;
     }).join('') + (pages > 1 ? `<div class="review-pagination"><button type="button" class="review-page-btn" data-kahi-review-page="prev" ${reviewPages[scope] === 0 ? 'disabled' : ''}>← 前へ</button><span>${reviewPages[scope] + 1} / ${pages}</span><button type="button" class="review-page-btn" data-kahi-review-page="next" ${reviewPages[scope] + 1 === pages ? 'disabled' : ''}>次へ →</button></div>` : '');
     list.querySelectorAll('[data-kahi-review-page]').forEach(button => button.addEventListener('click', () => {
