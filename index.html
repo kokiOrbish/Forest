@@ -4035,26 +4035,41 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
 
   function openMatchingTabs(target, query) {
     const terms = normalizedText(query).toLocaleLowerCase('ja').split(' ').filter(Boolean);
-    target.querySelectorAll('details').forEach(details => { details.open = true; });
+    const matchesTerms = element => {
+      const text = normalizedText(element?.textContent || '').toLocaleLowerCase('ja');
+      return terms.length > 0 && terms.every(term => text.includes(term));
+    };
+    target.querySelectorAll('details').forEach(details => { details.open = false; });
     const reviewTab = Array.from(target.querySelectorAll('[data-review-tab]')).find(button => {
-      const panelId = button.dataset.reviewTab === 'music' ? 'music-review-panel' : 'forest-review-panel';
+      const panelId = `${button.dataset.reviewTab}-review-panel`;
       const panel = document.getElementById(panelId);
-      const text = normalizedText(panel?.textContent || '').toLocaleLowerCase('ja');
-      return terms.every(term => text.includes(term));
+      return matchesTerms(panel);
     });
     if (reviewTab) reviewTab.click();
     const scopeTab = Array.from(target.querySelectorAll('[data-forest-review-scope]')).find(button => {
       const panel = document.getElementById(`forest-${button.dataset.forestReviewScope}-review-list`);
-      const text = normalizedText(panel?.textContent || '').toLocaleLowerCase('ja');
-      return terms.every(term => text.includes(term));
+      return matchesTerms(panel);
     });
     if (scopeTab) scopeTab.click();
+    const kahiScopeTab = Array.from(target.querySelectorAll('[data-kahi-review-scope]')).find(button => {
+      const panel = document.getElementById(`kahi-${button.dataset.kahiReviewScope}-review-list`);
+      return matchesTerms(panel);
+    });
+    if (kahiScopeTab) kahiScopeTab.click();
     const rankingTab = Array.from(target.querySelectorAll('[data-rtab]')).find(button => {
       const panel = document.getElementById(`rtab-${button.dataset.rtab}`);
-      const text = normalizedText(panel?.textContent || '').toLocaleLowerCase('ja');
-      return terms.every(term => text.includes(term));
+      return matchesTerms(panel);
     });
     if (rankingTab) rankingTab.click();
+
+    const matchingDetails = Array.from(target.querySelectorAll('details')).filter(matchesTerms);
+    matchingDetails.forEach(details => {
+      const hasMatchingChild = Array.from(details.querySelectorAll('details')).some(matchesTerms);
+      if (!hasMatchingChild) {
+        details.open = true;
+        details.parentElement?.closest('details')?.setAttribute('open', '');
+      }
+    });
   }
 
   function getMatches(query) {
@@ -4136,7 +4151,8 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
           const collapsible = target.matches('details') ? target : target.closest('details');
           if (collapsible) collapsible.open = true;
           highlightSearchMatches(target, query);
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const highlight = target.querySelector('.search-highlight');
+          (highlight || target).scrollIntoView({ behavior: 'smooth', block: 'center' });
           target.classList.remove('site-search-target');
           void target.offsetWidth;
           target.classList.add('site-search-target');
