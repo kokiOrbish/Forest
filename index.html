@@ -3791,7 +3791,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   };
   const renderFocusNote = () => {
     const note = byId('kahi-focus-note');
-    if (note) note.textContent = selectedScope === 'all' ? `全${quiz.questions.length}問を対象に出題します。` : getPartFocus().message;
+    if (note) note.textContent = selectedScope === 'all' ? `他パートを含む全${quiz.questions.length}問を対象に出題します。` : getPartFocus().message;
   };
   const renderReview = (scope = 'focus') => {
     const list = byId(`kahi-${scope}-review-list`);
