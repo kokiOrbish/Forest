@@ -37,6 +37,8 @@
     body[data-theme="black"] { --bg:#F4F4F4; --main:#303030; --main2:#555; --main-dark:#111; --pale:#D9D9D9; --pale2:#EBEBEB; --border:#D7D7D7; --shadow:0 2px 12px rgba(0,0,0,.10); --shadow-md:0 4px 20px rgba(0,0,0,.16); }
     body[data-theme="purple"] { --bg:#F8F4FC; --main:#70459A; --main2:#9667BD; --main-dark:#482A69; --pale:#E4D7F0; --pale2:#F0E9F7; --border:#E3D9EC; --shadow:0 2px 12px rgba(112,69,154,.10); --shadow-md:0 4px 20px rgba(112,69,154,.14); }
     body[data-theme="brown"] { --bg:#FAF6F1; --main:#815331; --main2:#A8784E; --main-dark:#51311E; --pale:#E9D8C7; --pale2:#F3E9DE; --border:#E5D9CC; --shadow:0 2px 12px rgba(129,83,49,.10); --shadow-md:0 4px 20px rgba(129,83,49,.14); }
+    body[data-theme="rainbow"] { --bg:#FFF7FB; --main:#E94B6A; --main2:#4C8DDE; --main-dark:#7D3FA0; --pale:#F7D8E7; --pale2:#EEF4FF; --border:#E8DCEB; --shadow:0 2px 12px rgba(125,63,160,.10); --shadow-md:0 4px 20px rgba(125,63,160,.14); }
+    body[data-theme="gold"] { --bg:#FFFBF0; --main:#B87908; --main2:#E6B83F; --main-dark:#6B4300; --pale:#F4E1A8; --pale2:#FFF6D8; --border:#EADDBA; --shadow:0 2px 12px rgba(184,121,8,.10); --shadow-md:0 4px 20px rgba(184,121,8,.14); }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
       color: var(--text);
@@ -741,6 +743,8 @@
           <option value="black">黒</option>
           <option value="purple">紫</option>
           <option value="brown">茶</option>
+          <option value="rainbow">虹色</option>
+          <option value="gold">金色</option>
         </select>
       </div>
       <div class="settings-field">
@@ -5255,7 +5259,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     notifySettingsChanged();
   }
   function applyTheme(theme) {
-    const allowed = ['green', 'red', 'cyan', 'orange', 'black', 'purple', 'brown'];
+    const allowed = ['green', 'red', 'cyan', 'orange', 'black', 'purple', 'brown', 'rainbow', 'gold'];
     const chosen = allowed.includes(theme) ? theme : 'green';
     document.body.dataset.theme = chosen;
     if (themeSelect) themeSelect.value = chosen;
