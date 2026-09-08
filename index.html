@@ -3763,7 +3763,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     if (partFocus[part] || part === '指揮者') localStorage.setItem('mori_otori_part', part);
     if (part === '指揮者') return { part, targets: null, message: 'あなたは指揮者なので全パートの問題を出題します。' };
     if (!partFocus[part]) return { part: null, targets: [], message: 'パート情報を確認できません。プロフィールでパートを登録してください。' };
-    return { part, targets: partFocus[part], message: `あなたのパート（${part}）に合わせて、「${partFocus[part].join('・')}」の問題を出題します。` };
+    return { part, targets: partFocus[part], message: `あなたのパート（${part}）に関係する問題を出題します。` };
   };
   const getFocusedQuestions = () => {
     const focus = getPartFocus();
