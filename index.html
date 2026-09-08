@@ -3517,7 +3517,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   function renderFocusNote() {
     const note = byId('forest-focus-note');
     if (!note) return;
-    note.textContent = selectedScope === 'all' ? `全${questions.length}問を対象に出題します。` : getPartFocus().message;
+    note.textContent = selectedScope === 'all' ? `他パートを含む全${questions.length}問を対象に出題します。` : getPartFocus().message;
   }
   function renderStatus() {
     if (!questions.length) return;
