@@ -3670,7 +3670,12 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
         if (button.dataset.excelQuizCount !== 'mistakes') button.textContent = `${Math.min(Number(button.dataset.excelQuizCount), questions.length)}問`;
       });
       synchronizeFocusHistoryWithAll(); renderReview('focus'); renderReview('all'); renderStatus();
-    }).catch(() => {});
+    }).catch(() => {
+      ['focus', 'all'].forEach(scope => {
+        const list = byId(`forest-${scope}-review-list`);
+        if (list) list.innerHTML = '<div class="empty">復習問題を読み込めませんでした。ページを再読み込みしてください。</div>';
+      });
+    });
     byId('forest-mode-btn').addEventListener('click', showForestModes);
     byId('excel-quiz-reveal').addEventListener('click', reveal);
     byId('excel-quiz-correct').addEventListener('click', () => score(true));
@@ -3907,6 +3912,8 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   document.addEventListener('DOMContentLoaded', () => {
     if (!quiz) return;
     renderStatus();
+    renderReview('focus');
+    renderReview('all');
     byId('kahi-quiz-start-btn').addEventListener('click', showModes);
     document.querySelectorAll('[data-kahi-count]').forEach(button => button.addEventListener('click', () => start(button.dataset.kahiCount)));
     document.querySelectorAll('[data-kahi-scope]').forEach(button => button.addEventListener('click', () => {
