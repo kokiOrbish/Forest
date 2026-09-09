@@ -645,6 +645,19 @@
     .weak-list[hidden] { display: none !important; }
     .forest-progress-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; margin-bottom: 8px; }
     .forest-progress-grid .quiz-status { margin-top: 0; font-size: .76rem; line-height: 1.55; }
+    .quiz-list-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: 14px 0; }
+    .quiz-list-tab { min-height: 42px; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; color: var(--sub); font: inherit; font-size: .82rem; font-weight: 900; cursor: pointer; }
+    .quiz-list-tab.active { color: var(--main); background: var(--pale2); border-color: var(--main); }
+    .quiz-list-scope { display: flex; gap: 7px; margin-bottom: 14px; }
+    .quiz-list-scope[hidden] { display: none; }
+    .quiz-list-scope .review-tab { flex: 1; }
+    .quiz-list-note { color: var(--sub); font-size: .8rem; line-height: 1.6; margin-bottom: 12px; }
+    .quiz-list-items { display: flex; flex-direction: column; gap: 9px; }
+    .quiz-list-item { border: 1px solid var(--border); border-radius: 12px; background: #FAFCF8; padding: 11px 12px; }
+    .quiz-list-number { color: var(--main); font-size: .74rem; font-weight: 900; margin-bottom: 4px; }
+    .quiz-list-question { font-weight: 850; line-height: 1.6; }
+    .quiz-list-answer { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); color: var(--main-dark); font-size: .84rem; line-height: 1.65; white-space: pre-wrap; }
+    @media (max-width: 420px) { .quiz-list-tabs { grid-template-columns: 1fr; } .quiz-list-scope { flex-direction: column; } }
     @media (max-width: 680px) { .quiz-start-options { grid-template-columns: 1fr; } }
     @media (max-width: 420px) { .excel-quiz-mode-grid { grid-template-columns: 1fr; } }
 
@@ -823,6 +836,10 @@
     <button class="nav-item" data-page="quiz" type="button">
       <span class="nav-icon">❓</span>
       <span class="nav-label">クイズ</span>
+    </button>
+    <button class="nav-item" data-page="quiz-list" type="button">
+      <span class="nav-icon">📖</span>
+      <span class="nav-label">問題一覧</span>
     </button>
     <button class="nav-item" data-page="trail" type="button">
       <span class="nav-icon">📈</span>
@@ -1180,6 +1197,29 @@
         </div>
       </section>
 
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: クイズ問題一覧
+  ══════════════════════════════════════ -->
+  <div id="page-quiz-list" class="page">
+    <div class="container">
+      <div class="card">
+        <h2 class="card-title">📖 クイズの問題と答え</h2>
+        <p class="quiz-lead">全クイズの問題と答えを確認できます。人生は森のなかの一日・歌碑は、パートに関係する問題だけを見ることもできます。</p>
+        <div class="quiz-list-tabs" role="tablist" aria-label="クイズの種類">
+          <button type="button" class="quiz-list-tab active" data-quiz-list-type="music" role="tab" aria-selected="true">音楽記号</button>
+          <button type="button" class="quiz-list-tab" data-quiz-list-type="forest" role="tab" aria-selected="false">人生は森のなかの一日</button>
+          <button type="button" class="quiz-list-tab" data-quiz-list-type="kahi" role="tab" aria-selected="false">歌碑</button>
+        </div>
+        <div id="quiz-list-scope" class="quiz-list-scope" hidden role="tablist" aria-label="表示範囲">
+          <button type="button" class="review-tab active" data-quiz-list-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
+          <button type="button" class="review-tab" data-quiz-list-scope="all" role="tab" aria-selected="false">全体</button>
+        </div>
+        <p id="quiz-list-note" class="quiz-list-note"></p>
+        <div id="quiz-list-items" class="quiz-list-items" aria-live="polite"></div>
+      </div>
     </div>
   </div>
 
@@ -2991,6 +3031,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const section = document.getElementById('practice-kiseki-section');
     if (section) section.open = true;
   };
+  window.MORI_MUSIC_QUIZ_DATA = QUIZ_DATA;
 
   document.addEventListener('DOMContentLoaded', renderKiseki);
 })();
@@ -3478,6 +3519,8 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       target: values[column('対象')]?.trim() || '全体',
       category: values[column('カテゴリ')]?.trim() || ''
     })).filter(question => question.question && question.answer);
+    window.MORI_FOREST_QUESTIONS = questions;
+    document.dispatchEvent(new Event('mori-forest-questions-ready'));
   }
   function loadHistory(scope = selectedScope) {
     try {
@@ -3958,6 +4001,95 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     byId('kahi-quiz-back').addEventListener('click', showMenu);
     document.addEventListener('mori-review-reset', () => { renderReview('focus'); renderReview('all'); renderStatus(); });
   });
+})();
+</script>
+
+<script>
+/* ── クイズ問題一覧 ── */
+(function() {
+  const partTargets = {
+    Sop: ['全体', '全パート', 'ソプラノ', '女声', '高声', '外声'],
+    Alt: ['全体', '全パート', 'アルト', '女声', '低声', '内声'],
+    Ten: ['全体', '全パート', 'テナー', '男声', '高声', '内声'],
+    Bass: ['全体', '全パート', 'ベース', '男声', '低声', '外声', 'ローベース']
+  };
+  let type = 'music';
+  let scope = 'focus';
+
+  const byId = id => document.getElementById(id);
+  const escapeHtml = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  const getPart = () => localStorage.getItem('mori_otori_part') || byId('input-part')?.value || byId('setup-part')?.value || '';
+  const getFocus = () => {
+    const part = getPart();
+    if (part === '指揮者') return { part, targets: null, message: '指揮者のため、全パートの問題を表示しています。' };
+    if (!partTargets[part]) return { part: null, targets: [], message: 'パート情報を確認できないため、パートフォーカスでは表示できません。' };
+    return { part, targets: partTargets[part], message: `${part}に関係する問題を表示しています。` };
+  };
+  const isFocused = question => {
+    const focus = getFocus();
+    if (!focus.part) return false;
+    if (!focus.targets) return true;
+    if (type === 'kahi') return focus.targets.includes(window.MORI_KAHI_REVIEW_QUIZ.targetById[question.id] || '全体');
+    return focus.targets.some(target => String(question.target || '').includes(target));
+  };
+  const getQuestions = () => {
+    if (type === 'music') return window.MORI_MUSIC_QUIZ_DATA || [];
+    if (type === 'forest') return window.MORI_FOREST_QUESTIONS || [];
+    return window.MORI_KAHI_REVIEW_QUIZ?.questions || [];
+  };
+  const renderMusicItem = (question, index) => `<article class="quiz-list-item"><div class="quiz-list-number">${index + 1}. ${escapeHtml(question.category)}　${escapeHtml(question.symbol)}</div><div class="quiz-list-question">${escapeHtml(question.question)}</div><div class="quiz-list-answer"><strong>答え：</strong>${escapeHtml(question.choices[question.answer])}<br><span>${escapeHtml(question.explanation)}</span></div></article>`;
+  const renderForestItem = (question, index) => `<article class="quiz-list-item"><div class="quiz-list-number">${index + 1}. ${escapeHtml(question.category)}　${escapeHtml(question.section)}　${escapeHtml(question.target)}</div><div class="quiz-list-question">${escapeHtml(question.question)}</div><div class="quiz-list-answer"><strong>答え：</strong>${escapeHtml(question.answer)}</div></article>`;
+  const renderKahiItem = (question, index) => `<article class="quiz-list-item"><div class="quiz-list-number">${index + 1}. 対象：${escapeHtml(window.MORI_KAHI_REVIEW_QUIZ.targetById[question.id] || '全体')}</div><div class="quiz-list-question">${escapeHtml(question.question)}</div><div class="quiz-list-answer"><strong>答え：</strong><br>${question.answers.map((answer, answerIndex) => `${answerIndex + 1}. ${escapeHtml(answer)}`).join('<br>')}${question.answer_note ? `<br><small>${escapeHtml(question.answer_note)}</small>` : ''}</div></article>`;
+  function render() {
+    const list = byId('quiz-list-items');
+    const note = byId('quiz-list-note');
+    const scopeWrap = byId('quiz-list-scope');
+    if (!list || !note || !scopeWrap) return;
+    const needsScope = type === 'forest' || type === 'kahi';
+    scopeWrap.hidden = !needsScope;
+    const allQuestions = getQuestions();
+    const questions = needsScope && scope === 'focus' ? allQuestions.filter(isFocused) : allQuestions;
+    if (type === 'music') note.textContent = `${allQuestions.length}問を表示しています。`;
+    else if (scope === 'all') note.textContent = `全体：全${allQuestions.length}問を表示しています。`;
+    else note.textContent = getFocus().message;
+    if (!allQuestions.length) {
+      list.innerHTML = '<div class="empty">問題を読み込んでいます…</div>';
+      return;
+    }
+    if (!questions.length) {
+      list.innerHTML = '<div class="empty">表示できる問題がありません。プロフィールでパートを登録してください。</div>';
+      return;
+    }
+    list.innerHTML = questions.map((question, index) => {
+      if (type === 'music') return renderMusicItem(question, index);
+      if (type === 'forest') return renderForestItem(question, index);
+      return renderKahiItem(question, index);
+    }).join('');
+  }
+  function setType(nextType) {
+    type = nextType;
+    document.querySelectorAll('[data-quiz-list-type]').forEach(button => {
+      const active = button.dataset.quizListType === type;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    render();
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-quiz-list-type]').forEach(button => button.addEventListener('click', () => setType(button.dataset.quizListType)));
+    document.querySelectorAll('[data-quiz-list-scope]').forEach(button => button.addEventListener('click', () => {
+      scope = button.dataset.quizListScope;
+      document.querySelectorAll('[data-quiz-list-scope]').forEach(item => {
+        const active = item.dataset.quizListScope === scope;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-selected', String(active));
+      });
+      render();
+    }));
+    render();
+  });
+  document.addEventListener('mori-forest-questions-ready', render);
+  document.addEventListener('mori-user-settings-changed', render);
 })();
 </script>
 
@@ -4956,6 +5088,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     document.getElementById('page-home').classList.remove('active');
     document.getElementById('page-quiz').classList.remove('active');
     document.getElementById('page-trail').classList.remove('active');
+    document.getElementById('page-quiz-list').classList.remove('active');
     document.getElementById('bottom-nav').style.display = 'none';
     const savedName = localStorage.getItem(LS_NAME), savedPart = localStorage.getItem(LS_PART);
     if (savedName) document.getElementById('setup-name').value = savedName;
