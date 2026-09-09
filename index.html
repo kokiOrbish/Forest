@@ -1062,21 +1062,23 @@
             </div>
           </details>
         </div>
-        <div class="card" id="quiz-list-section">
-          <h2 class="card-title">📖 クイズの問題と答え</h2>
-          <p class="quiz-lead">全クイズの問題と答えを確認できます。人生は森のなかの一日・歌碑は、パートに関係する問題だけを見ることもできます。</p>
-          <div class="quiz-list-tabs" role="tablist" aria-label="クイズの種類">
-            <button type="button" class="quiz-list-tab active" data-quiz-list-type="music" role="tab" aria-selected="true">音楽記号</button>
-            <button type="button" class="quiz-list-tab" data-quiz-list-type="forest" role="tab" aria-selected="false">人生は森のなかの一日</button>
-            <button type="button" class="quiz-list-tab" data-quiz-list-type="kahi" role="tab" aria-selected="false">歌碑</button>
+        <details class="card card-collapsible" id="quiz-list-section">
+          <summary>📖 クイズの問題と答え</summary>
+          <div style="margin-top:14px;">
+            <p class="quiz-lead">全クイズの問題と答えを確認できます。人生は森のなかの一日・歌碑は、パートに関係する問題だけを見ることもできます。</p>
+            <div class="quiz-list-tabs" role="tablist" aria-label="クイズの種類">
+              <button type="button" class="quiz-list-tab active" data-quiz-list-type="music" role="tab" aria-selected="true">音楽記号</button>
+              <button type="button" class="quiz-list-tab" data-quiz-list-type="forest" role="tab" aria-selected="false">人生は森のなかの一日</button>
+              <button type="button" class="quiz-list-tab" data-quiz-list-type="kahi" role="tab" aria-selected="false">歌碑</button>
+            </div>
+            <div id="quiz-list-scope" class="quiz-list-scope" hidden role="tablist" aria-label="表示範囲">
+              <button type="button" class="review-tab active" data-quiz-list-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
+              <button type="button" class="review-tab" data-quiz-list-scope="all" role="tab" aria-selected="false">全体</button>
+            </div>
+            <p id="quiz-list-note" class="quiz-list-note"></p>
+            <div id="quiz-list-items" class="quiz-list-items" aria-live="polite"></div>
           </div>
-          <div id="quiz-list-scope" class="quiz-list-scope" hidden role="tablist" aria-label="表示範囲">
-            <button type="button" class="review-tab active" data-quiz-list-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
-            <button type="button" class="review-tab" data-quiz-list-scope="all" role="tab" aria-selected="false">全体</button>
-          </div>
-          <p id="quiz-list-note" class="quiz-list-note"></p>
-          <div id="quiz-list-items" class="quiz-list-items" aria-live="polite"></div>
-        </div>
+        </details>
       </div>
 
       <div id="quiz-menu-screen" style="display:none;">
@@ -3019,8 +3021,6 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const section = document.getElementById('practice-kiseki-section');
     if (section) section.open = true;
   };
-  window.MORI_MUSIC_QUIZ_DATA = QUIZ_DATA;
-
   document.addEventListener('DOMContentLoaded', renderKiseki);
 })();
 </script>
@@ -3200,6 +3200,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       explanation: 'fp は forte piano。強く出た直後に弱くするニュアンスです。響きを味わってから次へ進めると効果的です。'
     }
   ];
+  window.MORI_MUSIC_QUIZ_DATA = QUIZ_DATA;
 
   const LS_KEY = 'mori_quiz_v1_history';
   let quizSession = [];
