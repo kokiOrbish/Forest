@@ -653,6 +653,8 @@
     .quiz-list-scope .review-tab { flex: 1; }
     .quiz-list-note { color: var(--sub); font-size: .8rem; line-height: 1.6; margin-bottom: 12px; }
     .quiz-list-items { display: flex; flex-direction: column; gap: 9px; }
+    .quiz-all-mode[hidden] { display: none; }
+    .quiz-list-toggle { margin-top: 12px; }
     .quiz-list-item { border: 1px solid var(--border); border-radius: 12px; background: #FAFCF8; padding: 11px 12px; }
     .quiz-list-number { color: var(--main); font-size: .74rem; font-weight: 900; margin-bottom: 4px; }
     .quiz-list-question { font-weight: 850; line-height: 1.6; }
@@ -1059,26 +1061,27 @@
                 <div id="kahi-all-review-list" class="weak-list" hidden></div>
               </div>
               <button id="quiz-reset-btn" type="button" class="secondary-btn danger" style="margin-top:12px;">すべての復習履歴をリセット</button>
+              <button id="quiz-list-toggle-btn" type="button" class="secondary-btn quiz-list-toggle" aria-expanded="false">全問を表示する</button>
+              <div id="quiz-all-mode" class="quiz-all-mode" hidden>
+                <div id="quiz-list-section" style="margin-top:14px;">
+                  <h3 class="card-title">📖 全問の問題と答え</h3>
+                  <p class="quiz-lead">全クイズの問題と答えを確認できます。人生は森のなかの一日・歌碑は、パートに関係する問題だけを見ることもできます。</p>
+                  <div class="quiz-list-tabs" role="tablist" aria-label="クイズの種類">
+                    <button type="button" class="quiz-list-tab active" data-quiz-list-type="music" role="tab" aria-selected="true">音楽記号</button>
+                    <button type="button" class="quiz-list-tab" data-quiz-list-type="forest" role="tab" aria-selected="false">人生は森のなかの一日</button>
+                    <button type="button" class="quiz-list-tab" data-quiz-list-type="kahi" role="tab" aria-selected="false">歌碑</button>
+                  </div>
+                  <div id="quiz-list-scope" class="quiz-list-scope" hidden role="tablist" aria-label="表示範囲">
+                    <button type="button" class="review-tab active" data-quiz-list-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
+                    <button type="button" class="review-tab" data-quiz-list-scope="all" role="tab" aria-selected="false">全体</button>
+                  </div>
+                  <p id="quiz-list-note" class="quiz-list-note"></p>
+                  <div id="quiz-list-items" class="quiz-list-items" aria-live="polite"></div>
+                </div>
+              </div>
             </div>
           </details>
         </div>
-        <details class="card card-collapsible" id="quiz-list-section">
-          <summary>📖 クイズの問題と答え</summary>
-          <div style="margin-top:14px;">
-            <p class="quiz-lead">全クイズの問題と答えを確認できます。人生は森のなかの一日・歌碑は、パートに関係する問題だけを見ることもできます。</p>
-            <div class="quiz-list-tabs" role="tablist" aria-label="クイズの種類">
-              <button type="button" class="quiz-list-tab active" data-quiz-list-type="music" role="tab" aria-selected="true">音楽記号</button>
-              <button type="button" class="quiz-list-tab" data-quiz-list-type="forest" role="tab" aria-selected="false">人生は森のなかの一日</button>
-              <button type="button" class="quiz-list-tab" data-quiz-list-type="kahi" role="tab" aria-selected="false">歌碑</button>
-            </div>
-            <div id="quiz-list-scope" class="quiz-list-scope" hidden role="tablist" aria-label="表示範囲">
-              <button type="button" class="review-tab active" data-quiz-list-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
-              <button type="button" class="review-tab" data-quiz-list-scope="all" role="tab" aria-selected="false">全体</button>
-            </div>
-            <p id="quiz-list-note" class="quiz-list-note"></p>
-            <div id="quiz-list-items" class="quiz-list-items" aria-live="polite"></div>
-          </div>
-        </details>
       </div>
 
       <div id="quiz-menu-screen" style="display:none;">
@@ -4075,6 +4078,14 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       });
       render();
     }));
+    const toggleButton = byId('quiz-list-toggle-btn');
+    const allMode = byId('quiz-all-mode');
+    toggleButton?.addEventListener('click', () => {
+      const isOpen = !allMode.hidden;
+      allMode.hidden = isOpen;
+      toggleButton.setAttribute('aria-expanded', String(!isOpen));
+      toggleButton.textContent = isOpen ? '全問を表示する' : '全問表示を閉じる';
+    });
     render();
   });
   document.addEventListener('mori-forest-questions-ready', render);
