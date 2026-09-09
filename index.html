@@ -837,10 +837,6 @@
       <span class="nav-icon">❓</span>
       <span class="nav-label">クイズ</span>
     </button>
-    <button class="nav-item" data-page="quiz-list" type="button">
-      <span class="nav-icon">📖</span>
-      <span class="nav-label">問題一覧</span>
-    </button>
     <button class="nav-item" data-page="trail" type="button">
       <span class="nav-icon">📈</span>
       <span class="nav-label">練習の軌跡</span>
@@ -1066,6 +1062,21 @@
             </div>
           </details>
         </div>
+        <div class="card" id="quiz-list-section">
+          <h2 class="card-title">📖 クイズの問題と答え</h2>
+          <p class="quiz-lead">全クイズの問題と答えを確認できます。人生は森のなかの一日・歌碑は、パートに関係する問題だけを見ることもできます。</p>
+          <div class="quiz-list-tabs" role="tablist" aria-label="クイズの種類">
+            <button type="button" class="quiz-list-tab active" data-quiz-list-type="music" role="tab" aria-selected="true">音楽記号</button>
+            <button type="button" class="quiz-list-tab" data-quiz-list-type="forest" role="tab" aria-selected="false">人生は森のなかの一日</button>
+            <button type="button" class="quiz-list-tab" data-quiz-list-type="kahi" role="tab" aria-selected="false">歌碑</button>
+          </div>
+          <div id="quiz-list-scope" class="quiz-list-scope" hidden role="tablist" aria-label="表示範囲">
+            <button type="button" class="review-tab active" data-quiz-list-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
+            <button type="button" class="review-tab" data-quiz-list-scope="all" role="tab" aria-selected="false">全体</button>
+          </div>
+          <p id="quiz-list-note" class="quiz-list-note"></p>
+          <div id="quiz-list-items" class="quiz-list-items" aria-live="polite"></div>
+        </div>
       </div>
 
       <div id="quiz-menu-screen" style="display:none;">
@@ -1197,29 +1208,6 @@
         </div>
       </section>
 
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════════
-       PAGE: クイズ問題一覧
-  ══════════════════════════════════════ -->
-  <div id="page-quiz-list" class="page">
-    <div class="container">
-      <div class="card">
-        <h2 class="card-title">📖 クイズの問題と答え</h2>
-        <p class="quiz-lead">全クイズの問題と答えを確認できます。人生は森のなかの一日・歌碑は、パートに関係する問題だけを見ることもできます。</p>
-        <div class="quiz-list-tabs" role="tablist" aria-label="クイズの種類">
-          <button type="button" class="quiz-list-tab active" data-quiz-list-type="music" role="tab" aria-selected="true">音楽記号</button>
-          <button type="button" class="quiz-list-tab" data-quiz-list-type="forest" role="tab" aria-selected="false">人生は森のなかの一日</button>
-          <button type="button" class="quiz-list-tab" data-quiz-list-type="kahi" role="tab" aria-selected="false">歌碑</button>
-        </div>
-        <div id="quiz-list-scope" class="quiz-list-scope" hidden role="tablist" aria-label="表示範囲">
-          <button type="button" class="review-tab active" data-quiz-list-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
-          <button type="button" class="review-tab" data-quiz-list-scope="all" role="tab" aria-selected="false">全体</button>
-        </div>
-        <p id="quiz-list-note" class="quiz-list-note"></p>
-        <div id="quiz-list-items" class="quiz-list-items" aria-live="polite"></div>
-      </div>
     </div>
   </div>
 
@@ -5088,7 +5076,6 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     document.getElementById('page-home').classList.remove('active');
     document.getElementById('page-quiz').classList.remove('active');
     document.getElementById('page-trail').classList.remove('active');
-    document.getElementById('page-quiz-list').classList.remove('active');
     document.getElementById('bottom-nav').style.display = 'none';
     const savedName = localStorage.getItem(LS_NAME), savedPart = localStorage.getItem(LS_PART);
     if (savedName) document.getElementById('setup-name').value = savedName;
