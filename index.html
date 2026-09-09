@@ -648,18 +648,18 @@
     .quiz-list-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: 14px 0; }
     .quiz-list-tab { min-height: 42px; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; color: var(--sub); font: inherit; font-size: .82rem; font-weight: 900; cursor: pointer; }
     .quiz-list-tab.active { color: var(--main); background: var(--pale2); border-color: var(--main); }
-    .quiz-list-scope { display: flex; gap: 7px; margin-bottom: 14px; }
+    .quiz-list-scope { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-bottom: 14px; }
     .quiz-list-scope[hidden] { display: none; }
     .quiz-list-scope .review-tab { flex: 1; }
     .quiz-list-note { color: var(--sub); font-size: .8rem; line-height: 1.6; margin-bottom: 12px; }
-    .quiz-list-items { display: flex; flex-direction: column; gap: 9px; }
+    .quiz-list-items { display: flex; flex-direction: column; gap: 8px; }
     .quiz-all-mode[hidden] { display: none; }
-    .quiz-list-toggle { margin-top: 12px; }
+    .quiz-list-toggle { display: block; width: 100%; margin: 12px 0 16px; position: relative; z-index: 1; }
     .quiz-list-item { border: 1px solid var(--border); border-radius: 12px; background: #FAFCF8; padding: 11px 12px; }
     .quiz-list-number { color: var(--main); font-size: .74rem; font-weight: 900; margin-bottom: 4px; }
     .quiz-list-question { font-weight: 850; line-height: 1.6; }
     .quiz-list-answer { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); color: var(--main-dark); font-size: .84rem; line-height: 1.65; white-space: pre-wrap; }
-    @media (max-width: 420px) { .quiz-list-tabs { grid-template-columns: 1fr; } .quiz-list-scope { flex-direction: column; } }
+    @media (max-width: 420px) { .quiz-list-tabs { grid-template-columns: 1fr; } }
     @media (max-width: 680px) { .quiz-start-options { grid-template-columns: 1fr; } }
     @media (max-width: 420px) { .excel-quiz-mode-grid { grid-template-columns: 1fr; } }
 
@@ -4024,9 +4024,9 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     if (type === 'forest') return window.MORI_FOREST_QUESTIONS || [];
     return window.MORI_KAHI_REVIEW_QUIZ?.questions || [];
   };
-  const renderMusicItem = (question, index) => `<article class="quiz-list-item"><div class="quiz-list-number">${index + 1}. ${escapeHtml(question.category)}　${escapeHtml(question.symbol)}</div><div class="quiz-list-question">${escapeHtml(question.question)}</div><div class="quiz-list-answer"><strong>答え：</strong>${escapeHtml(question.choices[question.answer])}<br><span>${escapeHtml(question.explanation)}</span></div></article>`;
-  const renderForestItem = (question, index) => `<article class="quiz-list-item"><div class="quiz-list-number">${index + 1}. ${escapeHtml(question.category)}　${escapeHtml(question.section)}　${escapeHtml(question.target)}</div><div class="quiz-list-question">${escapeHtml(question.question)}</div><div class="quiz-list-answer"><strong>答え：</strong>${escapeHtml(question.answer)}</div></article>`;
-  const renderKahiItem = (question, index) => `<article class="quiz-list-item"><div class="quiz-list-number">${index + 1}. 対象：${escapeHtml(window.MORI_KAHI_REVIEW_QUIZ.targetById[question.id] || '全体')}</div><div class="quiz-list-question">${escapeHtml(question.question)}</div><div class="quiz-list-answer"><strong>答え：</strong><br>${question.answers.map((answer, answerIndex) => `${answerIndex + 1}. ${escapeHtml(answer)}`).join('<br>')}${question.answer_note ? `<br><small>${escapeHtml(question.answer_note)}</small>` : ''}</div></article>`;
+  const renderMusicItem = question => `<div class="weak-item"><strong>${escapeHtml(question.symbol)}：${escapeHtml(question.question)}</strong><br><span style="font-size:.8rem;">正解：${escapeHtml(question.choices[question.answer])}<br>${escapeHtml(question.explanation)}</span></div>`;
+  const renderForestItem = question => `<div class="weak-item"><strong>${escapeHtml(question.question)}</strong><br><span style="font-size:.8rem;">正解：${escapeHtml(question.answer)}</span></div>`;
+  const renderKahiItem = question => `<div class="weak-item"><strong>${escapeHtml(question.question)}</strong><br><span style="font-size:.8rem;">正解：${question.answers.map(answer => escapeHtml(answer)).join('<br>')}</span>${question.answer_note ? `<br><small>${escapeHtml(question.answer_note)}</small>` : ''}</div>`;
   function render() {
     const list = byId('quiz-list-items');
     const note = byId('quiz-list-note');
@@ -4047,10 +4047,10 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       list.innerHTML = '<div class="empty">表示できる問題がありません。プロフィールでパートを登録してください。</div>';
       return;
     }
-    list.innerHTML = questions.map((question, index) => {
-      if (type === 'music') return renderMusicItem(question, index);
-      if (type === 'forest') return renderForestItem(question, index);
-      return renderKahiItem(question, index);
+    list.innerHTML = questions.map(question => {
+      if (type === 'music') return renderMusicItem(question);
+      if (type === 'forest') return renderForestItem(question);
+      return renderKahiItem(question);
     }).join('');
   }
   function setType(nextType) {
