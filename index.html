@@ -3428,9 +3428,9 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     if (resetBtn) resetBtn.addEventListener('click', () => {
       if (!confirm('すべての復習履歴をリセットしますか？')) return;
       localStorage.removeItem(LS_KEY);
-      localStorage.removeItem('mori_forest_review_quiz_history');
-      localStorage.removeItem('mori_forest_review_quiz_history_focus');
-      localStorage.removeItem('mori_forest_review_quiz_history_all');
+      localStorage.removeItem('mori_forest_review_quiz_0815_history');
+      localStorage.removeItem('mori_forest_review_quiz_0815_history_focus');
+      localStorage.removeItem('mori_forest_review_quiz_0815_history_all');
       localStorage.removeItem('mori_kahi_review_quiz_history');
       localStorage.removeItem('mori_kahi_review_quiz_history_focus');
       localStorage.removeItem('mori_kahi_review_quiz_history_all');
@@ -3447,7 +3447,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
 <script src="kahi_review_quiz_data.js"></script>
 <script>
 (function() {
-  const csvUrl = '人生は森のなかの1日_復習クイズ_ver3_1.csv';
+  const csvUrl = '人生は森のなかの1日_復習クイズ_8月15日反映版.csv';
   let questions = [];
   let session = [];
   let position = 0;
@@ -3456,8 +3456,8 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   let sessionScope = 'focus';
   const forestReviewPages = { focus: 0, all: 0 };
   const REVIEW_PAGE_SIZE = 5;
-  const LEGACY_REVIEW_KEY = 'mori_forest_review_quiz_history';
-  const REVIEW_KEYS = { focus: 'mori_forest_review_quiz_history_focus', all: 'mori_forest_review_quiz_history_all' };
+  const LEGACY_REVIEW_KEY = 'mori_forest_review_quiz_0815_history';
+  const REVIEW_KEYS = { focus: 'mori_forest_review_quiz_0815_history_focus', all: 'mori_forest_review_quiz_0815_history_all' };
   let selectedScope = 'focus';
   const PART_FOCUS = {
     Sop: ['全体', '全パート', '女声', 'ソプラノ', '高声'],
