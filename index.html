@@ -4030,7 +4030,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     const focus = getFocus();
     if (!focus.part) return false;
     if (!focus.targets) return true;
-    if (type === 'kahi') return focus.targets.includes(window.MORI_KAHI_REVIEW_QUIZ.targetById[question.id] || '全体');
+    if (type === 'kahi') return focus.targets.includes(window.MORI_KAHI_REVIEW_QUIZ?.targetById?.[question.id] || '全体');
     return focus.targets.some(target => String(question.target || '').includes(target));
   };
   const getQuestions = () => {
@@ -4041,6 +4041,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
   const renderMusicItem = question => `<div class="weak-item"><strong>${escapeHtml(question.symbol)}：${escapeHtml(question.question)}</strong><br><span style="font-size:.8rem;">正解：${escapeHtml(question.choices[question.answer])}<br>${escapeHtml(question.explanation)}</span></div>`;
   const renderForestItem = question => `<div class="weak-item"><strong>${escapeHtml(question.question)}</strong><br><span style="font-size:.8rem;">正解：${escapeHtml(question.answer)}</span></div>`;
   const renderKahiItem = question => `<div class="weak-item"><strong>${escapeHtml(question.question)}</strong><br><span style="font-size:.8rem;">正解：${question.answers.map(answer => escapeHtml(answer)).join('<br>')}</span>${question.answer_note ? `<br><small>${escapeHtml(question.answer_note)}</small>` : ''}</div>`;
+
   function render() {
     const list = byId('quiz-list-items');
     const note = byId('quiz-list-note');
@@ -4067,6 +4068,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       return renderKahiItem(question);
     }).join('');
   }
+
   function setType(nextType) {
     type = nextType;
     document.querySelectorAll('[data-review-tab]').forEach(button => {
@@ -4076,6 +4078,7 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     });
     render();
   }
+
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-review-tab]').forEach(button => button.addEventListener('click', () => setType(button.dataset.reviewTab)));
     document.querySelectorAll('[data-quiz-list-scope]').forEach(button => button.addEventListener('click', () => {
@@ -4087,18 +4090,15 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
       });
       render();
     }));
-    const toggleButton = byId('quiz-list-toggle-btn');
-    const allMode = byId('quiz-all-mode');
-    const reviewMode = byId('quiz-review-mode');
-    toggleButton?.addEventListener('click', () => {
-      const isOpen = !allMode.hidden;
-      allMode.hidden = isOpen;
-      reviewMode.hidden = !isOpen;
-      toggleButton.setAttribute('aria-expanded', String(!isOpen));
-      toggleButton.textContent = isOpen ? '全問を表示する' : '全問表示を閉じる';
+
+    const details = byId('quiz-all-list-details');
+    details?.addEventListener('toggle', () => {
+      if (details.open) render();
     });
+
     render();
   });
+
   document.addEventListener('mori-forest-questions-ready', render);
   document.addEventListener('mori-user-settings-changed', render);
 })();
