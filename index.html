@@ -1032,18 +1032,18 @@
           <p class="quiz-lead">音楽記号と「人生は森のなかの1日」の復習クイズに挑戦できます。</p>
           <button id="quiz-open-menu-btn" type="button" class="primary-btn" style="margin-top:14px;">クイズを始める ❓</button>
         </div>
-        <div class="card">
-          <h2 class="card-title">📘 間違えた問題の復習</h2>
-          <details class="kiseki-accordion">
-            <summary>間違えた問題を確認する</summary>
-            <div class="kiseki-accordion-body quiz-review-body">
-              <div class="review-tabs" role="tablist" aria-label="クイズ履歴">
-                <button type="button" class="review-tab active" data-review-tab="music" role="tab" aria-selected="true">音楽記号</button>
-                <button type="button" class="review-tab" data-review-tab="forest" role="tab" aria-selected="false">人生は森のなかの1日</button>
-                <button type="button" class="review-tab" data-review-tab="kahi" role="tab" aria-selected="false">歌碑</button>
-              </div>
-              <button id="quiz-list-toggle-btn" type="button" class="secondary-btn quiz-list-toggle" aria-expanded="false">全問を表示する</button>
-              <div id="quiz-review-mode">
+<!-- 間違えた問題の復習 -->
+      <div class="card">
+        <h2 class="card-title">📘 間違えた問題の復習</h2>
+        <details class="kiseki-accordion">
+          <summary>間違えた問題を確認する</summary>
+          <div class="kiseki-accordion-body quiz-review-body">
+            <div class="review-tabs" role="tablist" aria-label="クイズ履歴">
+              <button type="button" class="review-tab active" data-review-tab="music" role="tab" aria-selected="true">音楽記号</button>
+              <button type="button" class="review-tab" data-review-tab="forest" role="tab" aria-selected="false">人生は森のなかの1日</button>
+              <button type="button" class="review-tab" data-review-tab="kahi" role="tab" aria-selected="false">歌碑</button>
+            </div>
+            <div id="quiz-review-mode">
               <div id="music-review-panel" class="review-panel">
                 <div id="music-quiz-review-list" class="weak-list"></div>
               </div>
@@ -1063,21 +1063,34 @@
                 <div id="kahi-focus-review-list" class="weak-list"></div>
                 <div id="kahi-all-review-list" class="weak-list" hidden></div>
               </div>
-              </div>
-              <div id="quiz-all-mode" class="quiz-all-mode" hidden>
-                <div id="quiz-list-section">
-                  <div id="quiz-list-scope" class="quiz-list-scope" hidden role="tablist" aria-label="表示範囲">
-                    <button type="button" class="review-tab active" data-quiz-list-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
-                    <button type="button" class="review-tab" data-quiz-list-scope="all" role="tab" aria-selected="false">全体</button>
-                  </div>
-                  <p id="quiz-list-note" class="quiz-list-note"></p>
-                  <div id="quiz-list-items" class="quiz-list-items" aria-live="polite"></div>
-                </div>
-              </div>
-              <button id="quiz-reset-btn" type="button" class="secondary-btn danger" style="margin-top:12px;">すべての復習履歴をリセット</button>
             </div>
-          </details>
-        </div>
+            <button id="quiz-reset-btn" type="button" class="secondary-btn danger" style="margin-top:12px;">すべての復習履歴をリセット</button>
+          </div>
+        </details>
+      </div>
+
+      <!-- 独立させた「全問表示」カード -->
+      <div class="card">
+        <h2 class="card-title">📚 クイズ問題一覧</h2>
+        <details class="kiseki-accordion" id="quiz-all-list-details">
+          <summary>すべての問題と解答を表示する</summary>
+          <div class="kiseki-accordion-body quiz-review-body">
+            <div class="review-tabs" role="tablist" aria-label="問題一覧のジャンル">
+              <button type="button" class="review-tab active" data-review-tab="music" role="tab" aria-selected="true">音楽記号</button>
+              <button type="button" class="review-tab" data-review-tab="forest" role="tab" aria-selected="false">人生は森のなかの1日</button>
+              <button type="button" class="review-tab" data-review-tab="kahi" role="tab" aria-selected="false">歌碑</button>
+            </div>
+            <div id="quiz-list-section">
+              <div id="quiz-list-scope" class="quiz-list-scope" hidden role="tablist" aria-label="表示範囲">
+                <button type="button" class="review-tab active" data-quiz-list-scope="focus" role="tab" aria-selected="true">パートフォーカス</button>
+                <button type="button" class="review-tab" data-quiz-list-scope="all" role="tab" aria-selected="false">全体</button>
+              </div>
+              <p id="quiz-list-note" class="quiz-list-note"></p>
+              <div id="quiz-list-items" class="quiz-list-items" aria-live="polite"></div>
+            </div>
+          </div>
+        </details>
+      </div>
       </div>
 
       <div id="quiz-menu-screen" style="display:none;">
