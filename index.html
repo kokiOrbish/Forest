@@ -411,6 +411,7 @@
     .cal-nav-btn:hover { background: var(--pale2); border-color: var(--main2); }
     .cal-months { display: grid; grid-template-columns: minmax(0, 1fr); }
     .cal-month.current { padding: 0 8px; }
+    .search-highlight { background: #FFE08A; color: inherit; border-radius: 3px; padding: 0 2px; box-shadow: 0 0 0 2px rgba(242,184,75,.22); }
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -704,6 +705,8 @@
     .site-search-result-page { color: var(--main); font-size: .73rem; font-weight: 800; }
     .site-search-result-title { margin-top: 2px; color: var(--text); font-weight: 800; }
     .site-search-result-snippet { margin-top: 3px; color: var(--sub); font-size: .8rem; line-height: 1.55; }
+    .site-search-target { animation: search-target-flash 1.6s ease-out; }
+    @keyframes search-target-flash { 0%, 40% { box-shadow: 0 0 0 4px rgba(242,184,75,.72), var(--shadow-md); } 100% { box-shadow: var(--shadow); } }
     .settings-overlay { display:none; position:fixed; inset:0; z-index:450; background:rgba(16,38,23,.48); padding:18px 14px; overflow-y:auto; }
     .settings-overlay.active { display:block; }
     .settings-dialog { width:min(520px,100%); margin:8vh auto 0; padding:18px; border-radius:var(--radius); background:#fff; box-shadow:var(--shadow-md); }
@@ -4145,6 +4148,44 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
     return (start > 0 ? '…' : '') + text.slice(start, end) + (end < text.length ? '…' : '');
   }
 
+  function clearSearchHighlights() {
+    document.querySelectorAll('.search-highlight').forEach(mark => mark.replaceWith(document.createTextNode(mark.textContent)));
+    document.querySelectorAll('.site-search-target').forEach(el => el.classList.remove('site-search-target'));
+  }
+  window.clearSiteSearchHighlights = clearSearchHighlights;
+
+  function highlightSearchMatches(root, query) {
+    const terms = normalizedText(query).split(' ').filter(Boolean).sort((a, b) => b.length - a.length);
+    if (!root || !terms.length) return;
+    const pattern = new RegExp(terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'giu');
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent || /^(SCRIPT|STYLE|INPUT|TEXTAREA|SELECT|MARK)$/.test(parent.tagName) || !pattern.test(node.nodeValue)) return NodeFilter.FILTER_REJECT;
+        pattern.lastIndex = 0;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      pattern.lastIndex = 0;
+      node.nodeValue.replace(pattern, (match, offset) => {
+        fragment.append(node.nodeValue.slice(lastIndex, offset));
+        const mark = document.createElement('mark');
+        mark.className = 'search-highlight';
+        mark.textContent = match;
+        fragment.append(mark);
+        lastIndex = offset + match.length;
+        return match;
+      });
+      fragment.append(node.nodeValue.slice(lastIndex));
+      node.replaceWith(fragment);
+    });
+  }
+
   function openMatchingTabs(target, query) {
     const terms = normalizedText(query).toLocaleLowerCase('ja').split(' ').filter(Boolean);
     const matchesTerms = element => {
@@ -4258,10 +4299,16 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
         window.setTimeout(() => {
           const target = document.getElementById(match.id);
           if (!target) return;
+          clearSearchHighlights();
           openMatchingTabs(target, query);
           const collapsible = target.matches('details') ? target : target.closest('details');
           if (collapsible) collapsible.open = true;
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          highlightSearchMatches(target, query);
+          const highlight = target.querySelector('.search-highlight');
+          (highlight || target).scrollIntoView({ behavior: 'smooth', block: 'center' });
+          target.classList.remove('site-search-target');
+          void target.offsetWidth;
+          target.classList.add('site-search-target');
         }, 100);
       });
       results.append(button);
@@ -5028,11 +5075,14 @@ I. 終結部：「森のなかの一日のようだった」「私はうれし�
 
   // ── Page Navigation ──────────────────────
   function switchPage(page) {
+    const previousPage = document.querySelector('.page.active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const target = document.getElementById(`page-${page}`);
     if (target) target.classList.add('active');
     document.querySelectorAll('.nav-item').forEach(btn => btn.classList.toggle('active', btn.dataset.page === page));
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    // 検索ハイライトはページを離れたら消す（別画面から戻った時に光ったままにならないように）
+    if (previousPage && previousPage !== target) window.clearSiteSearchHighlights?.();
   }
 
   // ── Form ─────────────────────────────────
