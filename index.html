@@ -816,7 +816,6 @@
 
   <!-- ── Scripts ── -->
 <!-- ── Scripts ── -->
- <!-- ── Scripts ── -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, setDoc, doc, getDoc, getDocs, limit, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -851,38 +850,13 @@
       return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    /* ── ページ切り替え処理（下部ナビゲーション用） ── */
-    function switchPage(pageId) {
-      document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-
-      const targetPage = document.getElementById(`page-${pageId}`);
-      if (targetPage) targetPage.classList.add('active');
-
-      const targetNav = document.querySelector(`.nav-item[data-page="${pageId}"]`);
-      if (targetNav) targetNav.classList.add('active');
-    }
-
-    /* ── 登録情報変更画面の表示 ── */
-    function openProfileSetup() {
-      const setupOverlay = document.getElementById('setup-overlay');
-      if (setupOverlay) {
-        setupOverlay.classList.add('active');
-        const savedName = localStorage.getItem('mori_otori_name') || '';
-        const savedPart = localStorage.getItem('mori_otori_part') || '';
-        const nameInput = document.getElementById('setup-name');
-        const partSelect = document.getElementById('setup-part');
-        if (nameInput) nameInput.value = savedName;
-        if (partSelect) partSelect.value = savedPart;
-      }
-    }
-
     /* ── Activity Feed Rendering (SNS) ── */
     function renderActivityFeed(entries) {
       const feedEl = document.getElementById('activity-feed-list');
       if (!feedEl) return;
 
       const myUserId = localStorage.getItem('mori_otori_user_id');
+
       const visibleEntries = entries.filter(e => e.isPublic !== false || e.userId === myUserId);
 
       if (visibleEntries.length === 0) {
@@ -932,16 +906,17 @@
       }
       if (errorEl) errorEl.classList.remove('visible');
 
-      localStorage.setItem('mori_otori_name', name);
-      localStorage.setItem('mori_otori_part', part);
+      localStorage.getItem('mori_otori_name') || localStorage.setItem('mori_otori_name', name);
+      localStorage.getItem('mori_otori_part') || localStorage.setItem('mori_otori_part', part);
       if (!localStorage.getItem('mori_otori_user_id')) {
         localStorage.setItem('mori_otori_user_id', 'u_' + Math.random().toString(36).substr(2, 9));
       }
 
+      // セットアップ画面を閉じてメイン画面を開く
       document.getElementById('setup-overlay')?.classList.remove('active');
       const bottomNav = document.getElementById('bottom-nav');
       if (bottomNav) bottomNav.style.display = 'flex';
-      switchPage('home');
+      document.getElementById('page-home')?.classList.add('active');
     }
 
     /* ── 送信処理（データ投稿用） ── */
@@ -993,33 +968,11 @@
     }
 
     function init() {
-      // 1. 各種ボタンイベントのバインド（復元）
+      // 1. ボタンへのクリックイベント設定を一番最初に行う
       document.getElementById('save-profile-btn')?.addEventListener('click', handleSaveProfile);
       document.getElementById('submit-btn')?.addEventListener('click', handleSubmit);
 
-      // 「登録情報を変更」ボタン
-      document.getElementById('header-profile-btn')?.addEventListener('click', openProfileSetup);
-      document.getElementById('change-name-btn')?.addEventListener('click', openProfileSetup);
-
-      // 下部ナビゲーションボタン（ホーム / クイズ / 練習の軌跡）
-      document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const pageId = e.currentTarget.getAttribute('data-page');
-          if (pageId) switchPage(pageId);
-        });
-      });
-
-      // 2. 登録済みユーザーか確認し、画面初期表示を切り替え
-      const savedName = localStorage.getItem('mori_otori_name');
-      const savedPart = localStorage.getItem('mori_otori_part');
-      if (savedName && savedPart) {
-        document.getElementById('setup-overlay')?.classList.remove('active');
-        const bottomNav = document.getElementById('bottom-nav');
-        if (bottomNav) bottomNav.style.display = 'flex';
-        switchPage('home');
-      }
-
-      // 3. Firebase初期化
+      // 2. Firebase初期化
       try {
         const app = initializeApp(firebaseConfig);
         db = getFirestore(app);
