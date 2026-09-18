@@ -815,6 +815,7 @@
   <div id="toast" role="alert" aria-live="polite"></div>
 
   <!-- ── Scripts ── -->
+<!-- ── Scripts ── -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, setDoc, doc, getDoc, getDocs, limit, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -856,7 +857,6 @@
 
       const myUserId = localStorage.getItem('mori_otori_user_id');
 
-      // 公開設定（isPublicがtrue、または未設定の過去ログ）または自分の投稿を表示
       const visibleEntries = entries.filter(e => e.isPublic !== false || e.userId === myUserId);
 
       if (visibleEntries.length === 0) {
@@ -894,17 +894,46 @@
       }).join('');
     }
 
+    /* ── ユーザー情報保存（setup画面用） ── */
+    function handleSaveProfile() {
+      const name = document.getElementById('setup-name')?.value.trim();
+      const part = document.getElementById('setup-part')?.value;
+      const errorEl = document.getElementById('setup-error');
+
+      if (!name || !part) {
+        if (errorEl) errorEl.classList.add('visible');
+        return;
+      }
+      if (errorEl) errorEl.classList.remove('visible');
+
+      localStorage.getItem('mori_otori_name') || localStorage.setItem('mori_otori_name', name);
+      localStorage.getItem('mori_otori_part') || localStorage.setItem('mori_otori_part', part);
+      if (!localStorage.getItem('mori_otori_user_id')) {
+        localStorage.setItem('mori_otori_user_id', 'u_' + Math.random().toString(36).substr(2, 9));
+      }
+
+      // セットアップ画面を閉じてメイン画面を開く
+      document.getElementById('setup-overlay')?.classList.remove('active');
+      const bottomNav = document.getElementById('bottom-nav');
+      if (bottomNav) bottomNav.style.display = 'flex';
+      document.getElementById('page-home')?.classList.add('active');
+    }
+
+    /* ── 送信処理（データ投稿用） ── */
     async function handleSubmit() {
-      const name = localStorage.getItem('mori_otori_name') || document.getElementById('input-name').value.trim();
-      const part = localStorage.getItem('mori_otori_part') || document.getElementById('input-part').value;
-      const isPublic = document.getElementById('input-is-public').checked;
+      const name = localStorage.getItem('mori_otori_name') || document.getElementById('input-name')?.value.trim();
+      const part = localStorage.getItem('mori_otori_part') || document.getElementById('input-part')?.value;
+      const isPublic = document.getElementById('input-is-public')?.checked ?? true;
 
       const actions = Array.from(document.querySelectorAll('#action-grid input:checked')).map(el => el.value);
-      const minutes = parseInt(document.getElementById('input-minutes').value || 0, 10);
-      const comment = document.getElementById('input-comment').value.trim();
-      const weakPoint = document.getElementById('input-weak').value.trim();
+      const minutes = parseInt(document.getElementById('input-minutes')?.value || 0, 10);
+      const comment = document.getElementById('input-comment')?.value.trim() || '';
+      const weakPoint = document.getElementById('input-weak')?.value.trim() || '';
 
-      if (!actions.length) { alert('行動を選択してください'); return; }
+      if (!actions.length) { 
+        alert('行動を選択してください'); 
+        return; 
+      }
 
       const totalPoints = actions.reduce((sum, k) => sum + (ACTIONS.find(a => a.key === k)?.points || 0), 0) + Math.floor(minutes / 5);
 
@@ -921,7 +950,7 @@
           totalPoints,
           comment,
           weakPoint,
-          isPublic, // 公開トグル状態
+          isPublic,
           dateKey: new Date().toISOString().split('T')[0],
           createdAt: serverTimestamp()
         });
@@ -934,22 +963,32 @@
         alert('記録を送信しました！');
       } catch (e) {
         console.error(e);
-        alert('送信に失敗しました');
+        alert('送信に失敗しました: ' + e.message);
       }
     }
 
     function init() {
-      const app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-
-      // リアルタイムリスナー
-      const q = query(collection(db, 'entries'), orderBy('createdAt', 'desc'), limit(30));
-      onSnapshot(q, (snapshot) => {
-        currentEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderActivityFeed(currentEntries);
-      });
-
+      // 1. ボタンへのクリックイベント設定を一番最初に行う
+      document.getElementById('save-profile-btn')?.addEventListener('click', handleSaveProfile);
       document.getElementById('submit-btn')?.addEventListener('click', handleSubmit);
+
+      // 2. Firebase初期化
+      try {
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+
+        const q = query(collection(db, 'entries'), orderBy('createdAt', 'desc'), limit(30));
+        onSnapshot(q, (snapshot) => {
+          currentEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          renderActivityFeed(currentEntries);
+        }, (error) => {
+          console.error("Firestore Error:", error);
+          document.getElementById('firebase-warning')?.classList.add('visible');
+        });
+      } catch (e) {
+        console.error("Firebase Init Error:", e);
+        document.getElementById('firebase-warning')?.classList.add('visible');
+      }
     }
 
     document.addEventListener('DOMContentLoaded', init);
